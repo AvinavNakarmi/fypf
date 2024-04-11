@@ -1,1 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
+@use "./scss/components/button.scss";
+@use "./scss/components/sidebar.scss";
+@use "./scss/base/reset.scss";
+@use "./scss/components/canvas.scss";
+
+
+// regular style toast
+@import 'ngx-toastr/toastr';
+
+.toast-container
+{
+.ngx-toastr
+{
+  box-shadow: 0 0 12px #000 !important;
+}
+} 
+

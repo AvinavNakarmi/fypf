@@ -1,0 +1,13 @@
+<div class="canvas-container">
+  <canvas
+    #canvas
+   (contextmenu)="rightClick($event)"
+    (mousedown)="down($event)"
+    (mouseup)="up()"
+    (mousemove)="rotate($event)"
+    height="1280"
+    width="1280"
+    (wheel)="scale($event)"
+    id="canvas"
+  ></canvas>
+</div>

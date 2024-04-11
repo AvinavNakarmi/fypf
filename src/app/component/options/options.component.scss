@@ -1,0 +1,20 @@
+.options
+{
+    li 
+    {
+        cursor: pointer;
+        &:hover
+        {
+            .sub-options
+            {
+                display: block;
+            }    
+        }
+
+        .sub-options
+        {
+            display: none;
+        }
+    }
+    
+}
