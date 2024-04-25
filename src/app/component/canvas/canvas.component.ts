@@ -7,10 +7,12 @@ import {
 } from '@angular/core';
 import { mat4 } from 'gl-matrix';
 import { LightType } from 'src/app/enum/light-type';
+import { ObjectType } from 'src/app/enum/object-type';
 import { Light } from 'src/app/model/light.model';
 import { LightService } from 'src/app/services/light/light.service';
 import { ObjectService } from 'src/app/services/object.service';
 import { SceneService } from 'src/app/services/scene/scene.service';
+import { TextureService } from 'src/app/services/texture/texture.service';
 
 @Component({
   selector: 'app-canvas',
@@ -19,12 +21,17 @@ import { SceneService } from 'src/app/services/scene/scene.service';
 })
 export class CanvasComponent implements AfterViewInit, OnInit {
   @ViewChild('canvas') canvasRef!: ElementRef;
+  displayContextMenu: boolean = false;
+
+  LightPreset: LightType[] = Object.values(LightType);
+  ObjectPreset: ObjectType[] = Object.values(ObjectType);
 
   modelMatrix!: mat4;
   viewMatrix!: mat4;
   projectionMatrix!: mat4;
   lastMouseX: number = 0;
   lastMouseY: number = 0;
+  mousePosition: number[] = [];
 
   objectData!: Float32Array;
   objectNormalData!: Float32Array;
@@ -34,7 +41,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   constructor(
     private sceneService: SceneService,
     private objectService: ObjectService,
-    private lightService: LightService
+    private lightService: LightService,
+    private textureService: TextureService
   ) {}
 
   ngOnInit() {
@@ -58,7 +66,6 @@ export class CanvasComponent implements AfterViewInit, OnInit {
 
     mat4.lookAt(this.viewMatrix, [0, 0, 2], [0, 0, 0], [0, 1, 0]);
     mat4.translate(this.modelMatrix, this.modelMatrix, [0, 0, 0]);
-
     this.sceneService.createScene(this.canvasRef);
     this.sceneService.addObjectToScene(this.objectData);
     this.sceneService.addObjectNormalToScene(this.objectNormalData);
@@ -133,8 +140,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     
 void main() {
   vec3 meshColor = vec3(1.0);
-  float metalicness = 0.7;
-  float roughness = .5;
+  float metalicness = 0.9;
+  float roughness = 0.5;
   float ior = 1.319;
   vec3 camera = vec3(0.0,0.0,5.0);
   vec3 F0 = fresnelFactor(ior);
@@ -147,12 +154,12 @@ void main() {
 
   for(int i = 0; i <  MAX_LIGHTS; i++) {
     if (i == u_numLights) {
-      break; // Break the loop if we've reached the actual number of lights
+      break; 
   }
    
-    if( lightType[i]==POINT_LIGHT)
+    if( lightType[i]==0)
     {
-      lights[i] = Light(POINT_LIGHT, lightColor[i].xyz/255.0, lightPosition[i].xyz/100.0, lightIntencity[i]/100.0);     
+      lights[i] = Light(POINT_LIGHT, lightColor[i].xyz/255.0, lightPosition[i].xyz/10.0, lightIntencity[i]/5.0);     
     }
     else
     {
@@ -209,6 +216,7 @@ void main() {
     this.sceneService.createProgram();
     this.sceneService.setBuffer();
     this.sceneService.setRenderPreset();
+    this.addLight(LightType.POINT_LIGHT);
 
     this.sceneService.render(
       this.modelMatrix,
@@ -258,6 +266,7 @@ void main() {
     this.mousedown = false;
   }
   down(event: MouseEvent) {
+    this.displayContextMenu = false;
     this.mousedown = true;
     this.lastMouseX = event.clientX;
     this.lastMouseY = event.clientY;
@@ -282,15 +291,93 @@ void main() {
     event.preventDefault();
   }
 
-  changeObject() {
-    this.sceneService.addObjectToScene(this.objectService.getPlaneVertexData());
+  changeObject(object: ObjectType) {
+    switch (object) {
+      case ObjectType.CUBE:
+        this.objectService.getCube().subscribe((data) => {
+          this.objectData = new Float32Array(data.vertices);
+          this.objectNormalData = new Float32Array(data.normals);
+        });
+
+        break;
+      case ObjectType.ICOSPHERE:
+        this.objectService
+          .getIcoSphere()
+          .subscribe((data) => {this.objectData = new Float32Array(data.vertices);
+            this.objectNormalData = new Float32Array(data.normals);
+
+
+          });
+
+        break;
+      case ObjectType.UV_SPHERE:
+        this.objectService
+          .getSphere()
+          .subscribe((data) => {this.objectData = new Float32Array(data.vertices);
+          this.objectNormalData = new Float32Array(data.normals);
+
+
+            
+          });
+        break;
+      case ObjectType.CYLINDER:
+        this.objectService.getCylinder().subscribe((data) => {
+          this.objectData = new Float32Array(data.vertices);
+          this.objectNormalData = new Float32Array(data.normals);
+        });
+        break;
+        case ObjectType.IMPORT:
+          const input = document.getElementById('import');
+          input?.click();
+       
+        break;
+      default:
+        break;
+    }
+
+    this.sceneService.addObjectToScene(this.objectData);
+    this.sceneService.addObjectNormalToScene(this.objectNormalData);
+
+    this.sceneService.setBuffer();
+    this.sceneService.render(
+      this.modelMatrix,
+      this.projectionMatrix,
+      this.viewMatrix
+    );
   }
-  rightClick(event: Event) {
+  rightClick(event: MouseEvent) {
     event.preventDefault();
-    this.addLight(LightType.DIRECT_LIGHT);
+    this.mousePosition[0] = event.clientX;
+    this.mousePosition[1] = event.clientY;
+    this.displayContextMenu = true;
   }
 
   addLight(lightType: LightType) {
     this.lightService.addlight(lightType);
   }
+
+  
+  uploadfile(event:Event)
+  {
+    const files = (event.target as HTMLInputElement).files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          const content = event.target.result as string;
+   
+         const data = this.objectService.getImportedMesh(content);
+            this.objectData = new Float32Array(data.vertices);
+            this.objectNormalData = new Float32Array(data.normals);
+         
+      };
+     
+
+    }
+    reader.readAsText(file);
+
+  }
+
+}
 }

@@ -1,7 +1,30 @@
 <div class="canvas-container">
+  <div
+    *ngIf="displayContextMenu"
+    class="context-menu"
+    [ngStyle]="{ top: mousePosition[1] + 'px', left: mousePosition[0] + 'px' }"
+  >
+    <ul>
+      <h6>Add</h6>
+      <li>Lights</li>
+      <ul>
+        <li *ngFor="let light of LightPreset" (click)="addLight(light)">
+          {{ light }}
+        </li>
+      </ul>
+      <li>Object</li>
+      <ul>
+        <li *ngFor="let object of ObjectPreset" (click)="changeObject(object)">
+          {{ object }}
+        </li>
+        
+      </ul>
+    </ul>
+  </div>
+<input type="file" style="display:none" id="import" (change)="uploadfile($event)"> 
   <canvas
     #canvas
-   (contextmenu)="rightClick($event)"
+    (contextmenu)="rightClick($event)"
     (mousedown)="down($event)"
     (mouseup)="up()"
     (mousemove)="rotate($event)"

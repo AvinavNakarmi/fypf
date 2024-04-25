@@ -1,13 +1,4 @@
-import {
-  Component,
-  AfterViewInit,
-  ViewChild,
-  ElementRef,
-  Injector,
-} from '@angular/core';
-
-
-import {  Injectable,  OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, Injectable, Injector, OnDestroy, OnInit } from '@angular/core';
 import { NodeEditor, GetSchemes, ClassicPreset } from 'rete';
 import { AreaPlugin, AreaExtensions } from 'rete-area-plugin';
 import { ConnectionPlugin, Presets as ConnectionPresets } from 'rete-connection-plugin';
@@ -46,26 +37,17 @@ class NodeB extends ClassicPreset.Node {
 class Connection<A extends Node, B extends Node> extends ClassicPreset.Connection<A, B> {}
 
 
-@Component({
-  selector: 'app-graph',
-  templateUrl: './graph.component.html',
-  styleUrls: ['./graph.component.scss'],
-})
-export class GraphComponent implements AfterViewInit{
-  constructor(private injector: Injector) {}
 
+@Injectable({
+  providedIn: 'root'
+})
+export class GraphService {
+ 
   private editor: NodeEditor<Schemes> | null = null;
   private area: AreaPlugin<Schemes, AreaExtra> | null = null;
-  @ViewChild('rete') container!: ElementRef;
- 
-  ngAfterViewInit(): void {
-    const el = this.container.nativeElement;
 
-    if (el) {
-      this.createEditor(el, this.injector);
-    }
-  }
-  createEditor(elementRef: any,injector:Injector) {
+  constructor( ) { }
+  async createEditor(elementRef: any,injector:Injector) {
 
     const socket = new ClassicPreset.Socket('socket');
 
@@ -114,6 +96,3 @@ export class GraphComponent implements AfterViewInit{
 }
 
 
-
-
- 

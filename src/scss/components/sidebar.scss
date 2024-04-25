@@ -5,23 +5,14 @@
   width: 20em;
   .light-preview {
     height: 50vh;
-h4
-{
-    @extend .primary-bold;
-    color:white;
-}
+
 
     ul {
       li {
-        @extend .primary-regular;
         color:white;
         display: flex;
         padding:4px 24px;
         justify-content: space-between;
-        background-color: rgb(30, 30, 30);
-        &:nth-child(even) {
-          background-color: rgb(103, 103, 103);
-        }
       }
     }
   }

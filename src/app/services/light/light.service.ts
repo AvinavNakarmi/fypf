@@ -25,13 +25,12 @@ export class LightService {
       return;
     }
     const newLight:Light = {lightName:`light ${ this.lastLightId}`,LightID:this.lastLightId,  lightType:lightType,
-    color:[1,1,1],
+    color:[255,255,255],
     position:[1,1,1],
-    intencity:1.0};
+    intencity:5.0};
     this.currentLightData.push(newLight);
     this.light$.next(this.currentLightData);
     this.lastLightId++;
-    console.log(this.currentLightData);
     this.toastr.success("light is added");
 
   }

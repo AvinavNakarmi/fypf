@@ -1,8 +1,11 @@
+@import "./scss/fonts/font.scss";
+
 /* You can add global styles to this file, and also import other style files */
-@use "./scss/components/button.scss";
-@use "./scss/components/sidebar.scss";
-@use "./scss/base/reset.scss";
-@use "./scss/components/canvas.scss";
+@import "./scss/components/button.scss";
+@import "./scss/components/sidebar.scss";
+@import "./scss/base/reset.scss";
+@import "./scss/components/canvas.scss";
+
 
 
 // regular style toast

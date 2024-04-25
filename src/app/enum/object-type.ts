@@ -3,4 +3,6 @@ export enum ObjectType {
   UV_SPHERE = 'UV Sphere',
   CUBE = 'Cube',
   PLANE = 'Plane',
+  CYLINDER="Cylinder",
+  IMPORT ="Import Object"
 }

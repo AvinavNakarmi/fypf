@@ -12,6 +12,7 @@
   </ul>
 </div>
 <div class="light-setting" *ngIf="selectedLight">
+  {{selectedLight|json}}
 
     <label for="">color</label>
     <input type="color" #colorPicker [(ngModel)]="selectedLight.color"  (input)="hexToRgb(colorPicker.value)" (change)="changeLight()" />

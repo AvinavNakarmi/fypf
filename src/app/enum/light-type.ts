@@ -1,4 +1,4 @@
 export enum LightType {
-  DIRECT_LIGHT = '1',
-  POINT_LIGHT = '0',
+  DIRECT_LIGHT = 'Direct Light',
+  POINT_LIGHT = 'Point Light',
 }

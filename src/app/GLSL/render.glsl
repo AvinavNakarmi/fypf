@@ -67,7 +67,7 @@ void main() {
   lights[1] = Light(DIRECT_LIGHT, vec3(1.0, 1., 1.0), vec3(1.0, 1.0, 1.0), 20.);
   lights[1] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 0.1), 5.);
 
-  float metalicness = 0.2;
+  float metalicness = 0.9;
   float roughness = .1;
   float ior = 1.319;
 

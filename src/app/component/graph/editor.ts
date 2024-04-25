@@ -1,65 +1,20 @@
-import { Injector } from "@angular/core";
-import { NodeEditor, GetSchemes, ClassicPreset } from "rete";
-import { AreaPlugin, AreaExtensions } from "rete-area-plugin";
-import {
-  ConnectionPlugin,
-  Presets as ConnectionPresets
-} from "rete-connection-plugin";
-import { AngularPlugin, Presets, AngularArea2D } from "rete-angular-plugin/15";
-
-type Schemes = GetSchemes<
-  ClassicPreset.Node,
-  ClassicPreset.Connection<ClassicPreset.Node, ClassicPreset.Node>
->;
-type AreaExtra = AngularArea2D<Schemes>;
-
-export async function createEditor(container: HTMLElement, injector: Injector) {
-  const socket = new ClassicPreset.Socket("socket");
-
-  const editor = new NodeEditor<Schemes>();
-  const area = new AreaPlugin<Schemes, AreaExtra>(container);
-  const connection = new ConnectionPlugin<Schemes, AreaExtra>();
-  const render = new AngularPlugin<Schemes, AreaExtra>({ injector });
-
-  AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
-    accumulating: AreaExtensions.accumulateOnCtrl()
-  });
-
-  render.addPreset(Presets.classic.setup());
-
-  connection.addPreset(ConnectionPresets.classic.setup());
-
-  editor.use(area);
-  area.use(connection);
-  area.use(render);
+// import { createEditor as createDefaultEditor } from './default'
+import { createEditor as createDefaultEditor } from './graph'
 
 
+const factory = {
+  'default': createDefaultEditor,
+}
+// eslint-disable-next-line no-restricted-globals, no-undef
+const query = typeof location !== 'undefined' && new URLSearchParams(location.search)
+const name = ((query && query.get('template')) || 'default') as keyof typeof factory
 
-  
-  AreaExtensions.simpleNodesOrder(area);
+const createEditor = factory[name]
 
-  const a = new ClassicPreset.Node("A");
-  a.addControl(
-    "a",
-    new ClassicPreset.InputControl("text", { initial: "" })
-  );
-  a.addOutput("a", new ClassicPreset.Output(socket));
-  await editor.addNode(a);
+if (!createEditor) {
+  throw new Error(`template with name ${name} not found`)
+}
 
-  const b = new ClassicPreset.Node("B");
-  b.addControl(
-    "b",
-    new ClassicPreset.InputControl("text", { initial: "" })
-  );
- 
-  b.addInput("b", new ClassicPreset.Input(socket));
-  await editor.addNode(b);
-
-  await area.translate(b.id, { x: 320, y: 0 });
-
-  await editor.addConnection(new ClassicPreset.Connection(a, "a", b, "b"));
-
-  AreaExtensions.zoomAt(area, editor.getNodes());
-
-  return () => area.destroy();
+export {
+  createEditor
 }

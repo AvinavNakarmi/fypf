@@ -176,7 +176,7 @@ var flattenedPositionArray = [].concat.apply([], lightPositions);
 
       this.gl.clearColor(0.2, 0.2, 0.2, 1.0);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, this.objectService.getINdecises().length);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0,  this.object.length / 3);
       
       // this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0,  this.object.length / 3);
       // this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, this.object.length / 3);
