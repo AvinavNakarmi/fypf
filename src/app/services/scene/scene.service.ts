@@ -15,6 +15,7 @@ export class SceneService {
   fragmentShader: WebGLShader | null = null;
   object!: Float32Array;
   objectNormal!: Float32Array;
+  objectTextureCoord!: Float32Array;
   lights$:Light[]=[]; 
 
   constructor(private lightService:LightService,private objectService:ObjectService) {
@@ -41,6 +42,11 @@ export class SceneService {
   addObjectNormalToScene(objectNormalData:Float32Array)
   {
     this.objectNormal = objectNormalData;
+
+  }
+  addObjectTextureCoordToScene(objectTextureCoordData:Float32Array)
+  {
+    this.objectTextureCoord = objectTextureCoordData;
 
   }
 
@@ -187,5 +193,38 @@ var flattenedPositionArray = [].concat.apply([], lightPositions);
       
 
     }
+  }
+  renderImage(image:any) {
+    if(this.gl && this.program)
+      {
+   
+     
+const tbuffer = this.gl.createBuffer();
+this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tbuffer);
+this.gl.bufferData(this.gl.ARRAY_BUFFER, this.objectTextureCoord, this.gl.STATIC_DRAW);
+
+
+const textureCoordLocation = this.gl.getAttribLocation(this.program, `a_texCoord`);
+this.gl.enableVertexAttribArray(textureCoordLocation);
+this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tbuffer);
+this.gl.vertexAttribPointer(textureCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+var texture = this.gl.createTexture();
+this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+
+// Set the parameters so we can render any size image.
+this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+
+// Upload the image into the texture.
+this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+let ImageBoolLocation = this.gl.getUniformLocation(this.program, "image");
+this.gl.uniform1i(ImageBoolLocation,1);
+
+
+      }
+ 
+ 
   }
 }

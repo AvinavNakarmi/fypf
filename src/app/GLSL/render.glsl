@@ -4,6 +4,9 @@ varying vec4 v_normal;
 varying vec4 v_position;
 #define POINT_LIGHT 0
 #define DIRECT_LIGHT 1
+    varying vec2 v_texCoord;
+    uniform sampler2D u_image;
+
 
 #define PI 3.14
 
@@ -87,8 +90,9 @@ void main() {
     finalColor = min(finalColor + color, vec4(1.0));
     finalColor = max(finalColor, vec4(0.0));
 
-  }
+  } 
 
-  gl_FragColor = vec4(finalColor);
+
+  gl_FragColor = vec4(finalColor+ texture2D(u_image, v_texCoord));
 
 }

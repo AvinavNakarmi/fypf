@@ -35,6 +35,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
 
   objectData!: Float32Array;
   objectNormalData!: Float32Array;
+  objectTextCoordData!: Float32Array;
 
   mousedown: boolean = false;
 
@@ -69,6 +70,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     this.sceneService.createScene(this.canvasRef);
     this.sceneService.addObjectToScene(this.objectData);
     this.sceneService.addObjectNormalToScene(this.objectNormalData);
+    this.sceneService.addObjectTextureCoordToScene(this.objectNormalData);
 
     this.sceneService.createFragmentShader(`
     #define PI 3.14
@@ -76,12 +78,16 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     #define DIRECT_LIGHT 1
 
     precision mediump float;
+    varying vec2 v_texCoord;
+    uniform sampler2D u_image;
+
 
     uniform vec3 lightColor [10];
     uniform int lightType [10];
     uniform vec3 lightPosition[10];
     uniform float lightIntencity[10];
     uniform int u_numLights;
+    uniform int image;
      
     varying vec4 v_normal;
     varying vec4 v_position;
@@ -182,15 +188,23 @@ void main() {
     finalColor = min(finalColor + color, vec4(1.0));
     finalColor = max(finalColor, vec4(0.0));
   }
+if(image==1)
+  {
+    gl_FragColor = texture2D(u_image, v_texCoord);
+  }
+  else
+  {
+    gl_FragColor = vec4(finalColor);
 
-  gl_FragColor = vec4(finalColor);
+  }
 }
 
     `);
 
     this.sceneService.createVertexShader(
       `
-
+      attribute vec2 a_texCoord;
+      
       attribute vec3 normal;
       
     precision mediump float;
@@ -201,6 +215,7 @@ void main() {
     varying vec4 v_normal;
     varying vec4 v_position;
 
+    varying vec2 v_texCoord;
 
 
 
@@ -208,6 +223,7 @@ void main() {
     void main() {
       v_normal =projectionMatrix*viewMatrix*modelMatrix*vec4(normal, 1.0);
       v_position=projectionMatrix*viewMatrix*modelMatrix*vec4(position, 1.0);
+      v_texCoord = a_texCoord;
 
         gl_Position = projectionMatrix*viewMatrix*modelMatrix* vec4(position, 1);    }
     `
@@ -297,64 +313,78 @@ void main() {
         this.objectService.getCube().subscribe((data) => {
           this.objectData = new Float32Array(data.vertices);
           this.objectNormalData = new Float32Array(data.normals);
+          this.objectTextCoordData = new Float32Array(data.textCoord);
+
           this.sceneService.addObjectToScene(this.objectData);
           this.sceneService.addObjectNormalToScene(this.objectNormalData);
-      
+          this.sceneService.addObjectTextureCoordToScene(
+            this.objectTextCoordData
+          );
+console.log(data);
           this.sceneService.setBuffer();
-        
         });
 
         break;
       case ObjectType.ICOSPHERE:
-        this.objectService
-          .getIcoSphere()
-          .subscribe((data) => {this.objectData = new Float32Array(data.vertices);
-            this.objectNormalData = new Float32Array(data.normals);
+        this.objectService.getIcoSphere().subscribe((data) => {
+          this.objectData = new Float32Array(data.vertices);
+          this.objectTextCoordData = new Float32Array(data.textCoord);
 
-            this.sceneService.addObjectToScene(this.objectData);
-            this.sceneService.addObjectNormalToScene(this.objectNormalData);
-        
-            this.sceneService.setBuffer();
-          
-          });
+          this.objectNormalData = new Float32Array(data.normals);
+
+          this.sceneService.addObjectToScene(this.objectData);
+          this.sceneService.addObjectTextureCoordToScene(
+            this.objectTextCoordData
+          );
+
+          this.sceneService.addObjectNormalToScene(this.objectNormalData);
+
+          this.sceneService.setBuffer();
+        });
 
         break;
       case ObjectType.UV_SPHERE:
-        this.objectService
-          .getSphere()
-          .subscribe((data) => {this.objectData = new Float32Array(data.vertices);
+        this.objectService.getSphere().subscribe((data) => {
+          this.objectData = new Float32Array(data.vertices);
+          this.objectTextCoordData = new Float32Array(data.textCoord);
+
           this.objectNormalData = new Float32Array(data.normals);
           this.sceneService.addObjectToScene(this.objectData);
-          this.sceneService.addObjectNormalToScene(this.objectNormalData);
-      
-          this.sceneService.setBuffer();
-        
+          this.sceneService.addObjectTextureCoordToScene(
+            this.objectTextCoordData
+          );
 
-            
-          });
+          this.sceneService.addObjectNormalToScene(this.objectNormalData);
+
+          this.sceneService.setBuffer();
+        });
         break;
       case ObjectType.CYLINDER:
         this.objectService.getCylinder().subscribe((data) => {
           this.objectData = new Float32Array(data.vertices);
+          this.objectTextCoordData = new Float32Array(data.textCoord);
+
           this.objectNormalData = new Float32Array(data.normals);
           this.sceneService.addObjectToScene(this.objectData);
+          this.sceneService.addObjectTextureCoordToScene(
+            this.objectTextCoordData
+          );
+
           this.sceneService.addObjectNormalToScene(this.objectNormalData);
-      
+
           this.sceneService.setBuffer();
-        
         });
         break;
-        case ObjectType.IMPORT:
-          const input = document.getElementById('import');
-          input?.click();
-        
-             
+      case ObjectType.IMPORT:
+        const input = document.getElementById('import');
+        input?.click();
+
         break;
       default:
         break;
     }
 
-   this.sceneService.render(
+    this.sceneService.render(
       this.modelMatrix,
       this.projectionMatrix,
       this.viewMatrix
@@ -371,31 +401,54 @@ void main() {
     this.lightService.addlight(lightType);
   }
 
-  
-  uploadfile(event:Event)
-  {
+  uploadfile(event: Event) {
     const files = (event.target as HTMLInputElement).files;
-    
+
     if (files && files.length > 0) {
       const file = files[0];
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target && event.target.result) {
           const content = event.target.result as string;
-   
-         const data = this.objectService.getImportedMesh(content);
-            this.objectData = new Float32Array(data.vertices);
-            this.objectNormalData = new Float32Array(data.normals);
-            this.sceneService.addObjectToScene(this.objectData);
-            this.sceneService.addObjectNormalToScene(this.objectNormalData);     
-            this.sceneService.setBuffer();
+
+          const data = this.objectService.getImportedMesh(content);
+          this.objectData = new Float32Array(data.vertices);
+          this.objectNormalData = new Float32Array(data.normals);
+          this.objectTextCoordData = new Float32Array(data.textCoord);
+
+          this.sceneService.addObjectToScene(this.objectData);
+          this.sceneService.addObjectTextureCoordToScene(
+            this.objectTextCoordData
+          );
+
+          this.sceneService.addObjectNormalToScene(this.objectNormalData);
+          this.sceneService.setBuffer();
+        }
       };
-     
-
+      reader.readAsText(file);
     }
-    reader.readAsText(file);
-
   }
 
-}
+  uploadImage(event: Event) {
+    debugger
+    const inputElement = event.target as HTMLInputElement;
+    const file = inputElement.files?.[0]; // Get the selected file
+    if (!file) return; // If no file is selected, return
+  
+    const reader = new FileReader(); // Create a FileReader object
+  
+    // Set up the FileReader onload event
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string; // Get the data URL of the uploaded image
+      const image = new Image(); // Create a new Image object
+      image.src = imageUrl; // Set the src attribute of the Image object to the data URL
+  
+      // Optionally, you can add an onload event handler to execute code when the image is loaded
+      image.onload = () => {
+      this.sceneService.renderImage(image);
+
+      }
+    }
+    reader.readAsDataURL(file);
+  }
 }
