@@ -40,7 +40,7 @@ export class LightService {
       return light.LightID != lightId;
     });
     this.light$.next(newLightData);
-    this.toastr.success("light is delecte");
+    this.toastr.success("light is delete");
 
   }
   editLight(lightId: number, light: Light) {

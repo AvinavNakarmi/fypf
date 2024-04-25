@@ -40,6 +40,41 @@ changeLight()
     }
 
 }
+
+get modifiedData():string{
+  
+  if(this.selectedLight)
+    {
+      
+      return this.RGBTohex(this.selectedLight.color);
+    }
+  
+    return "#ffffff";
+  }
+
+set modifiedData(value: string) {
+  if( this.selectedLight)
+    {
+      this.hexToRgb(value);
+
+    }
+
+}
+
+RGBTohex(rgb:number[])
+{
+  let rHex = rgb[0].toString(16);
+  let r =rHex.length == 1 ? "0" + rHex :  rHex;
+  
+  let gHex = rgb[1].toString(16);
+  let g = gHex.length == 1 ? "0" + gHex :  gHex;
+
+  let bHex = rgb[2].toString(16);
+  let b = bHex.length == 1 ? "0" + bHex :  bHex;
+
+  return "#" + r + g + b;
+  
+}
 hexToRgb(hex:string) {
   hex = hex.replace(/^#/, '');
 
@@ -50,6 +85,22 @@ if(this.selectedLight)
   {
     this.selectedLight.color=[r,g,b];
   }
+}
+lightStyle(index: number)
+{
+  if(!this.selectedLight)
+    {
+    return "light-inactive";
+
+    }
+
+    if(this.selectedLight.LightID==index)
+      {
+      return "light-active";
+
+      }
+      return "light-inactive";
+
 }
 
 }

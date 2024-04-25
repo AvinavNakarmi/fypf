@@ -4,17 +4,18 @@
     class="context-menu"
     [ngStyle]="{ top: mousePosition[1] + 'px', left: mousePosition[0] + 'px' }"
   >
+  <p class="primary-bold  context-menu-main-heading">Add</p>
+  
     <ul>
-      <h6>Add</h6>
-      <li>Lights</li>
+      <li class="primary-regular  context-menu-heading">Lights</li>
       <ul>
-        <li *ngFor="let light of LightPreset" (click)="addLight(light)">
+        <li class="context-clickable" *ngFor="let light of LightPreset" (click)="addLight(light)">
           {{ light }}
         </li>
       </ul>
-      <li>Object</li>
+      <li class="primary-regular  context-menu-heading">Object</li>
       <ul>
-        <li *ngFor="let object of ObjectPreset" (click)="changeObject(object)">
+        <li class="context-clickable" *ngFor="let object of ObjectPreset" (click)="changeObject(object)">
           {{ object }}
         </li>
         

@@ -297,6 +297,11 @@ void main() {
         this.objectService.getCube().subscribe((data) => {
           this.objectData = new Float32Array(data.vertices);
           this.objectNormalData = new Float32Array(data.normals);
+          this.sceneService.addObjectToScene(this.objectData);
+          this.sceneService.addObjectNormalToScene(this.objectNormalData);
+      
+          this.sceneService.setBuffer();
+        
         });
 
         break;
@@ -306,7 +311,11 @@ void main() {
           .subscribe((data) => {this.objectData = new Float32Array(data.vertices);
             this.objectNormalData = new Float32Array(data.normals);
 
-
+            this.sceneService.addObjectToScene(this.objectData);
+            this.sceneService.addObjectNormalToScene(this.objectNormalData);
+        
+            this.sceneService.setBuffer();
+          
           });
 
         break;
@@ -315,7 +324,11 @@ void main() {
           .getSphere()
           .subscribe((data) => {this.objectData = new Float32Array(data.vertices);
           this.objectNormalData = new Float32Array(data.normals);
-
+          this.sceneService.addObjectToScene(this.objectData);
+          this.sceneService.addObjectNormalToScene(this.objectNormalData);
+      
+          this.sceneService.setBuffer();
+        
 
             
           });
@@ -324,22 +337,24 @@ void main() {
         this.objectService.getCylinder().subscribe((data) => {
           this.objectData = new Float32Array(data.vertices);
           this.objectNormalData = new Float32Array(data.normals);
+          this.sceneService.addObjectToScene(this.objectData);
+          this.sceneService.addObjectNormalToScene(this.objectNormalData);
+      
+          this.sceneService.setBuffer();
+        
         });
         break;
         case ObjectType.IMPORT:
           const input = document.getElementById('import');
           input?.click();
-       
+        
+             
         break;
       default:
         break;
     }
 
-    this.sceneService.addObjectToScene(this.objectData);
-    this.sceneService.addObjectNormalToScene(this.objectNormalData);
-
-    this.sceneService.setBuffer();
-    this.sceneService.render(
+   this.sceneService.render(
       this.modelMatrix,
       this.projectionMatrix,
       this.viewMatrix
@@ -360,6 +375,7 @@ void main() {
   uploadfile(event:Event)
   {
     const files = (event.target as HTMLInputElement).files;
+    
     if (files && files.length > 0) {
       const file = files[0];
       const reader = new FileReader();
@@ -370,7 +386,9 @@ void main() {
          const data = this.objectService.getImportedMesh(content);
             this.objectData = new Float32Array(data.vertices);
             this.objectNormalData = new Float32Array(data.normals);
-         
+            this.sceneService.addObjectToScene(this.objectData);
+            this.sceneService.addObjectNormalToScene(this.objectNormalData);     
+            this.sceneService.setBuffer();
       };
      
 

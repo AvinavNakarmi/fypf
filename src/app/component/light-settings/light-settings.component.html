@@ -4,29 +4,55 @@
     <li
       class="light"
       *ngFor="let light of lights"
+      [ngClass]="lightStyle(light.LightID)"
       (click)="displayLightData(light)"
     >
-      <span>{{ light.lightName }}</span
+      <span>{{ light.lightName }} </span
       ><button (click)="deleteLight(light.LightID)">delete</button>
     </li>
   </ul>
 </div>
 <div class="light-setting" *ngIf="selectedLight">
-  {{selectedLight|json}}
-
+  <div>
     <label for="">color</label>
-    <input type="color" #colorPicker [(ngModel)]="selectedLight.color"  (input)="hexToRgb(colorPicker.value)" (change)="changeLight()" />
+    <input
+      type="color"
+      #colorPicker
+      [(ngModel)]="modifiedData"
+      (input)="hexToRgb(colorPicker.value)"
+      (change)="changeLight()"
+    />
+  </div>
+  <div>
     <label for="">X</label>
-    <input type="number" [(ngModel)]="selectedLight.position[0]" (change)="changeLight()" />
+    <input
+      type="number"
+      [(ngModel)]="selectedLight.position[0]"
+      (change)="changeLight()"
+    />
+  </div>
+  <div>
     <label for="">Y</label>
-    <input type="number" [(ngModel)]="selectedLight.position[1]" (change)="changeLight()"/>
+    <input
+      type="number"
+      [(ngModel)]="selectedLight.position[1]"
+      (change)="changeLight()"
+    />
+  </div>
+  <div>
     <label for="">Z</label>
-    <input type="number" [(ngModel)]="selectedLight.position[2]" (change)="changeLight()"/>
-  
+    <input
+      type="number"
+      [(ngModel)]="selectedLight.position[2]"
+      (change)="changeLight()"
+    />
+  </div>
+  <div>
     <label for="">Strength</label>
-    <input type="number" [(ngModel)]="selectedLight.intencity" (change)="changeLight()"/>
-   
-  
-
-  
+    <input
+      type="number"
+      [(ngModel)]="selectedLight.intencity"
+      (change)="changeLight()"
+    />
+  </div>
 </div>

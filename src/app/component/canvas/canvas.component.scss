@@ -9,4 +9,26 @@
 .context-menu{
     z-index: 2;
     position: absolute;
+    background-color: #000;
+    padding:10px 20px;
+    border-radius:8px ;
+
+    .context-menu-main-heading{
+        border-bottom: #fff 1px solid ;
+        margin-bottom: 4px;
+    }
+    .context-menu-heading{
+        border-bottom: #fff 1px solid ;
+        margin-bottom: 4px;
+    }
+
+    .context-clickable
+    {
+        cursor: pointer;
+        
+        &:hover
+        {
+            background-color: red;
+        }
+    }
 }

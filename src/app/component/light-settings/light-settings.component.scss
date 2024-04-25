@@ -1,0 +1,22 @@
+.light-preview
+{
+    .light
+{
+    cursor: pointer;
+    &:hover
+    {
+        background-color: red;
+    }
+}
+.light-active
+{
+    background-color: red;
+}
+}
+
+.light-setting
+{
+    display: flex;
+    flex-direction: column;
+
+}
