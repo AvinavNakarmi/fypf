@@ -150,7 +150,7 @@ export class ObjectService {
     );
   }
   getCube() {
-    return this.getObjData('../../assets/cube2.obj').pipe(
+    return this.getObjData('../../assets/cube.obj').pipe(
       map((res) => {
         const objectData = this.parseOBJ(res);
         return objectData;

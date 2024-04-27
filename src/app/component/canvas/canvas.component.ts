@@ -10,7 +10,7 @@ import { LightType } from 'src/app/enum/light-type';
 import { ObjectType } from 'src/app/enum/object-type';
 import { Light } from 'src/app/model/light.model';
 import { LightService } from 'src/app/services/light/light.service';
-import { ObjectService } from 'src/app/services/object.service';
+import { ObjectService } from 'src/app/services/object/object.service';
 import { SceneService } from 'src/app/services/scene/scene.service';
 import { TextureService } from 'src/app/services/texture/texture.service';
 
@@ -190,7 +190,7 @@ void main() {
   }
 if(image==1)
   {
-    gl_FragColor = texture2D(u_image, v_texCoord);
+    gl_FragColor =finalColor*texture2D(u_image, v_texCoord);
   }
   else
   {

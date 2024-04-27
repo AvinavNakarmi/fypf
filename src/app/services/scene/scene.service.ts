@@ -3,7 +3,7 @@ import { mat4 } from 'gl-matrix';
 import { Light } from 'src/app/model/light.model';
 import { LightService } from '../light/light.service';
 import { LightType } from 'src/app/enum/light-type';
-import { ObjectService } from '../object.service';
+import { ObjectService } from '../object/object.service';
 
 @Injectable({
   providedIn: 'root',
@@ -109,6 +109,12 @@ this.gl.enableVertexAttribArray(npositionLocation);
 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, nbuffer);
 this.gl.vertexAttribPointer(npositionLocation, 3, this.gl.FLOAT, false, 0, 0);
 
+const tbuffer = this.gl.createBuffer();
+this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tbuffer);
+this.gl.bufferData(this.gl.ARRAY_BUFFER, this.objectTextureCoord, this.gl.STATIC_DRAW);
+const textureCoordLocation = this.gl.getAttribLocation(this.program, `a_texCoord`);
+this.gl.enableVertexAttribArray(textureCoordLocation);
+this.gl.vertexAttribPointer(textureCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 
 
     }
@@ -199,15 +205,6 @@ var flattenedPositionArray = [].concat.apply([], lightPositions);
       {
    
      
-const tbuffer = this.gl.createBuffer();
-this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tbuffer);
-this.gl.bufferData(this.gl.ARRAY_BUFFER, this.objectTextureCoord, this.gl.STATIC_DRAW);
-
-
-const textureCoordLocation = this.gl.getAttribLocation(this.program, `a_texCoord`);
-this.gl.enableVertexAttribArray(textureCoordLocation);
-this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tbuffer);
-this.gl.vertexAttribPointer(textureCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 var texture = this.gl.createTexture();
 this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
