@@ -1,5 +1,4 @@
 import { Component, ElementRef, Injector, ViewChild } from '@angular/core';
-import { createEditor } from 'src/app/graph/graph';
 
 @Component({
   selector: 'app-graph',
@@ -15,6 +14,5 @@ constructor(private injector:Injector)
 }
 
 async ngAfterViewInit() {
-  await createEditor(this.container.nativeElement, this.injector)
 }
 }
