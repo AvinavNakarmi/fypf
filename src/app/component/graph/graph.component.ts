@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, Injector, ViewChild } from '@angular/core';
+import { createEditor } from 'src/app/graph/graph';
 
 @Component({
   selector: 'app-graph',
@@ -6,5 +7,14 @@ import { Component } from '@angular/core';
   styleUrls: ['./graph.component.scss']
 })
 export class GraphComponent {
+@ViewChild("rete") container!:ElementRef<HTMLElement>;
 
+constructor(private injector:Injector)
+{
+  
+}
+
+async ngAfterViewInit() {
+  await createEditor(this.container.nativeElement, this.injector)
+}
 }

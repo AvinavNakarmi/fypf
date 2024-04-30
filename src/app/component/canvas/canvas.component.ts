@@ -147,7 +147,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
 void main() {
   vec3 meshColor = vec3(1.0);
   float metalicness = 0.9;
-  float roughness = 0.5;
+  float roughness = 0.1;
   float ior = 1.319;
   vec3 camera = vec3(0.0,0.0,5.0);
   vec3 F0 = fresnelFactor(ior);
