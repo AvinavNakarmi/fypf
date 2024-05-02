@@ -84,5 +84,5 @@ void main() {
   vec3 normal = v_normal.xyz;
 vec2  uv = gl_FragCoord.xy/u_resolution;
  
-  gl_FragColor =  vec4(vec3(perlinNoise(uv, 10.0)), 1.0);
+  gl_FragColor =  vec4(vec3(ridgedNoise(uv, 10.0)), 1.0);
 }
