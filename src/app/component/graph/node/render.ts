@@ -1,11 +1,33 @@
 import { ClassicPreset as Classic } from 'rete';
+import { TextureService } from 'src/app/services/texture/texture.service';
 export class Render extends Classic.Node {
 
     constructor(socket:Classic.Socket) {
         super('render');
-        this.addInput(`metalicness`, new Classic.Input(socket, `metalicness`));
-        this.addInput(`roughness`, new Classic.Input(socket, `roughness`));
-        this.addInput(`IOR`, new Classic.Input(socket, `IOR`));
-        this.addInput(`normal`, new Classic.Input(socket, `normal`));  
+        const metalicnessControl = new Classic.InputControl("number", {
+            initial: 0,
+            change(value) {
+
+                console.log(value);
+            },
+          });
+          const roughnessControl = new Classic.InputControl("number", {
+            initial: 0,
+            change(value) {
+                console.log(value);
+            },
+          });
+          const IORControl = new Classic.InputControl("number", {
+            initial: 0,
+            change(value) {
+                console.log(value);
+            },
+          });
+        
+          this.addControl("input", metalicnessControl);
+          this.addControl("input2", roughnessControl);
+          this.addControl("input3", IORControl);
+
         }
+
 }

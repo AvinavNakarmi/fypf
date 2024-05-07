@@ -2,14 +2,160 @@ precision mediump float;
 uniform vec3 u_camera;
 varying vec4 v_normal;
 varying vec4 v_position;
+uniform vec2 u_resolution;
+varying vec2 v_texcoord;
+uniform float u_time;
 #define POINT_LIGHT 0
 #define DIRECT_LIGHT 1
-    varying vec2 v_texCoord;
-    uniform sampler2D u_image;
 
 
 #define PI 3.14
 
+
+
+float whiteNoise(vec2 p)
+{
+    float random = dot(p,vec2(12.,78.));
+    random = sin(random);
+    random =random* 43758.5453;
+    random =fract(random);
+    return random;
+}
+float valueNoise(vec2 uv)
+{
+    vec2 gridUV = fract(uv);
+    vec2 gridID = floor(uv);
+    gridUV =smoothstep(0.0,1.0, gridUV);
+
+
+
+vec3 color =vec3(gridUV,0.0);
+float bottomLeft = whiteNoise(gridID);
+float bottomRight = whiteNoise(gridID+vec2(1.0,0.0));
+float topLeft = whiteNoise(gridID+vec2(0.0,1.0));
+float topRight = whiteNoise(gridID+ vec2(1.0,1.0));
+
+float bottom  = mix(bottomLeft,bottomRight,gridUV.x); 
+float top  = mix(topLeft,topRight,gridUV.x); 
+
+float valueNoise = mix(bottom,top,gridUV.y); 
+
+
+
+
+    return valueNoise;
+}
+float layeredValueNoise(vec2 uv, int itter)
+{
+ float layeredValue = 0.0;
+    float uvMultiplier =2.0;
+    float uvsubtractor =1.0;
+
+    for(int i=0;i<=10 ;i++)
+    {
+        if(itter<=i)
+        {
+            break;
+        }
+        uvMultiplier*=2.0;
+        uvsubtractor/=2.0;
+
+        layeredValue += valueNoise(uv*uvMultiplier)*uvsubtractor; 
+
+    }
+    return layeredValue;
+
+
+}
+
+vec2 randomGradient(vec2 p) {
+  p = p + 0.02;
+  float x = dot(p, vec2(123.4, 234.5));
+  float y = dot(p, vec2(234.5, 345.6));
+  vec2 gradient = vec2(x, y);
+  gradient = sin(gradient);
+  gradient = gradient * 43758.5453;
+
+  gradient = sin(gradient );
+  return gradient;
+}
+
+
+vec2 quintic(vec2 p) {
+  return p * p * p * (10.0 + p * (-15.0 + p * 6.0));
+}
+
+float perlinNoise(vec2 texcoord, float scale)
+{
+
+ vec2 uv = texcoord*scale;
+
+  vec3 black = vec3(0.9);
+  vec3 white = vec3(1.0);
+  vec3 color = black;
+
+  vec2 gridId = floor(uv);
+  vec2 gridUv = fract(uv);
+  color = vec3(gridId, 0.0);
+  color = vec3(gridUv, 0.0);
+
+  vec2 bl = gridId + vec2(0.0, 0.0);
+  vec2 br = gridId + vec2(1.0, 0.0);
+  vec2 tl = gridId + vec2(0.0, 1.0);
+  vec2 tr = gridId + vec2(1.0, 1.0);
+
+  vec2 gradBl = randomGradient(bl);
+  vec2 gradBr = randomGradient(br);
+  vec2 gradTl = randomGradient(tl);
+  vec2 gradTr = randomGradient(tr);
+
+  vec2 distFromPixelToBl = gridUv - vec2(0.0, 0.0);
+  vec2 distFromPixelToBr = gridUv - vec2(1.0, 0.0);
+  vec2 distFromPixelToTl = gridUv - vec2(0.0, 1.0);
+  vec2 distFromPixelToTr = gridUv - vec2(1.0, 1.0);
+
+  float dotBl = dot(gradBl, distFromPixelToBl);
+  float dotBr = dot(gradBr, distFromPixelToBr);
+  float dotTl = dot(gradTl, distFromPixelToTl);
+  float dotTr = dot(gradTr, distFromPixelToTr);
+
+
+  gridUv = quintic(gridUv);
+
+  float b = mix(dotBl, dotBr, gridUv.x);
+  float t = mix(dotTl, dotTr, gridUv.x);
+  float perlin = mix(b, t, gridUv.y);
+
+  // color = vec3(perlin + 0.2);
+return perlin;
+
+}
+float billowNoise(vec2 uv ,float scale)
+{
+    return abs(perlinNoise(uv,scale));
+
+
+}
+
+float ridgedNoise(vec2 uv ,float scale)
+{
+    float noise = 1.0- billowNoise(uv,scale); 
+    return abs(noise*noise);
+
+
+}
+vec3 calculateNormals(vec2 uv)
+{
+  float diff= 0.0001;
+  float height = .0001;
+  float p1 = perlinNoise((uv +vec2(diff,0.0)),20.0);
+  float p2 = perlinNoise((uv -vec2(diff,0.0)),20.0);
+  float p3 = perlinNoise((uv +vec2(0.0,diff)),20.0);
+  float p4 = perlinNoise((uv -vec2(0.0,diff)),20.0);
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
 struct Light {
   int lightType;
   vec3 color;
@@ -17,8 +163,8 @@ struct Light {
   float intencity;
 };
 
-vec3 diffusedBRDF(vec3 color, vec3 incomeLight) {
-  vec3 diffusedColor = (color / PI) * dot(incomeLight, v_normal.xyz);
+vec3 diffusedBRDF(vec3 color, vec3 incomeLight,vec3 N) {
+  vec3 diffusedColor = (color / PI) * dot(incomeLight, N.xyz);
 
   return diffusedColor;
 }
@@ -66,24 +212,27 @@ float lightAttenuation(Light light) {
 void main() {
   Light lights[10];
   vec3 meshColor = vec3(1.0);
-  lights[0] = Light(POINT_LIGHT, vec3(0.0, 1.0, 0.0), vec3(-.1, -.1, .2), 15.0);
-  lights[1] = Light(DIRECT_LIGHT, vec3(1.0, 1., 1.0), vec3(1.0, 1.0, 1.0), 20.);
-  lights[1] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 0.1), 5.);
+  lights[0] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(1.0, 1., 0.9), 2.0);
+  // lights[1] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(-1.0, -.0, 1.), 20.0);
 
-  float metalicness = 0.9;
-  float roughness = .1;
-  float ior = 1.319;
+  float metalicness = 0.01;
+  float roughness = 1.0;
+  float ior = 1.45;
 
   vec3 F0 = fresnelFactor(ior);
+// vec2  uv = gl_FragCoord.xy/u_resolution;
+vec2  uv = v_texcoord;
 
-  vec3 N = normalize(v_normal.xyz);
+  // vec3 N = normalize(v_normal.xyz);
+  vec3 N = normalize( calculateNormals(uv).xyz+ v_normal.xyz );
+
   float nDotV = dot(N, u_camera);
   vec4 finalColor = vec4(0.0);
 
   for(int i = 0; i < 10; i++) {
     vec3 L = normalize(lights[i].position);
     float nDotL = max(dot(N, L), 0.001);
-    vec3 diffusedLight = lights[i].color * diffusedBRDF(meshColor, lights[i].position) * (1. - metalicness);
+    vec3 diffusedLight = lights[i].color * diffusedBRDF(meshColor, lights[i].position,N) * (1. - metalicness);
     vec3 specularLight = lights[i].color * specularBRDF(nDotL, nDotV, roughness, F0);
     float lightIntencity = lights[i].intencity / lightAttenuation(lights[i]);
     vec4 color = vec4(((diffusedLight + specularLight) * lightIntencity * nDotL), 1.);
@@ -93,6 +242,6 @@ void main() {
   } 
 
 
-  gl_FragColor = vec4(finalColor+ texture2D(u_image, v_texCoord));
+  gl_FragColor = vec4( vec3(finalColor),1.0);
 
 }

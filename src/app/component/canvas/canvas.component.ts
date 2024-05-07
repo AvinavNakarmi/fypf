@@ -38,6 +38,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   objectTextCoordData!: Float32Array;
 
   mousedown: boolean = false;
+  fragShader!: string;
+  vertexShader!: string;
 
   constructor(
     private sceneService: SceneService,
@@ -49,9 +51,12 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   ngOnInit() {
     this.objectData = this.objectService.getCubeVertexData();
     this.objectNormalData = this.objectService.getCubeVertexNormal();
+   
   }
 
   ngAfterViewInit(): void {
+  
+
     const canvas = this.canvasRef.nativeElement;
     this.modelMatrix = mat4.create();
     this.viewMatrix = mat4.create();
@@ -72,162 +77,12 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     this.sceneService.addObjectNormalToScene(this.objectNormalData);
     this.sceneService.addObjectTextureCoordToScene(this.objectNormalData);
 
-    this.sceneService.createFragmentShader(`
-    #define PI 3.14
-    #define POINT_LIGHT 0
-    #define DIRECT_LIGHT 1
+    this.sceneService.setShader(this.textureService.getFragmentShader(),"frag");
+    this.sceneService.setShader(this.textureService.getVertexShader(),"vertex");
 
-    precision mediump float;
-    varying vec2 v_texCoord;
-    uniform sampler2D u_image;
+    this.sceneService.createFragmentShader( );
 
-
-    uniform vec3 lightColor [10];
-    uniform int lightType [10];
-    uniform vec3 lightPosition[10];
-    uniform float lightIntencity[10];
-    uniform int u_numLights;
-    uniform int image;
-     
-    varying vec4 v_normal;
-    varying vec4 v_position;
-
-    struct Light {
-      int lightType;
-      vec3 color;
-      vec3 position;
-      float intencity;
-    };
-
-    vec3 diffusedBRDF(vec3 color, vec3 incomeLight) {
-      vec3 diffusedColor = (color / PI) * dot(incomeLight, v_normal.xyz); 
-      return diffusedColor;
-    }
-    
-    float normalDistribution(float halfV, float roughness) {
-      float roughness2 = pow(roughness, 4.0);
-      float d = pow(halfV, 2.0) * (roughness2 - 1.) + 1.;
-      float normalDistribution = roughness2 / (PI * pow(d, 2.0));
-      return normalDistribution;
-    }
-
-    float schlickGGX(float nDotV, float roughness) {
-      float K = pow((roughness + 1.0), 2.0);
-      float denominator = nDotV * (1.0 - K) + K;
-      return nDotV / denominator;
-    }
-    
-    vec3 fresnelSchlick(float cosTheta, vec3 F0) {
-      return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-    }
-
-    vec3 specularBRDF(float nDotL, float nDotV, float roughness, vec3 F0) {
-      vec3 top = normalDistribution(nDotL, roughness) * schlickGGX(nDotL, roughness) * fresnelSchlick(nDotL, F0);
-      return top;
-    }
-    
-    vec3 fresnelFactor(float ior) {
-      return vec3(pow((ior - 1.), 2.0) / pow((ior + 1.), 2.0)); 
-    }
-    
-    float lightAttenuation(Light light) {
-      if(light.lightType == DIRECT_LIGHT) {
-        return 1.0;
-      }
-      if(light.lightType == POINT_LIGHT) {
-        float distanceSquared = distance(normalize(v_position.xyz), light.position);
-        float attenuation = 1.0 + 1.0 * distanceSquared + 2.0 * distanceSquared * distanceSquared;
-        return attenuation;
-      }
-
-      return 0.0;
-
-    }
-    
-void main() {
-  vec3 meshColor = vec3(1.0);
-  float metalicness = 0.9;
-  float roughness = 0.1;
-  float ior = 1.319;
-  vec3 camera = vec3(0.0,0.0,5.0);
-  vec3 F0 = fresnelFactor(ior);
-  vec3 N = normalize(v_normal.xyz);
-  float nDotV = dot(N, camera);
-  vec4 finalColor = vec4(0.0);
-  Light lights[10];
-
-  const int MAX_LIGHTS = 10;
-
-  for(int i = 0; i <  MAX_LIGHTS; i++) {
-    if (i == u_numLights) {
-      break; 
-  }
-   
-    if( lightType[i]==0)
-    {
-      lights[i] = Light(POINT_LIGHT, lightColor[i].xyz/255.0, lightPosition[i].xyz/10.0, lightIntencity[i]/5.0);     
-    }
-    else
-    {
-      lights[i] = Light(DIRECT_LIGHT, lightColor[i].xyz/255.0, lightPosition[i],lightIntencity[i]);
-    
- 
-    }
-    }
-
-  for(int i = 0; i <  MAX_LIGHTS; i++) {
-    if (i == u_numLights) {
-      break; // Break the loop if we've reached the actual number of lights
-  }
-    vec3 L = normalize(lights[i].position);
-    float nDotL = max(dot(N, L), 0.001);
-    vec3 diffusedLight = lights[i].color * diffusedBRDF(meshColor, lights[i].position) * (1. - metalicness);
-    vec3 specularLight = lights[i].color * specularBRDF(nDotL, nDotV, roughness, F0);
-    float lightIntencity = lights[i].intencity / lightAttenuation(lights[i]);
-    vec4 color = vec4(((diffusedLight + specularLight) * lightIntencity * nDotL), 1.);
-    finalColor = min(finalColor + color, vec4(1.0));
-    finalColor = max(finalColor, vec4(0.0));
-  }
-if(image==1)
-  {
-    gl_FragColor =finalColor*texture2D(u_image, v_texCoord);
-  }
-  else
-  {
-    gl_FragColor = vec4(finalColor);
-
-  }
-}
-
-    `);
-
-    this.sceneService.createVertexShader(
-      `
-      attribute vec2 a_texCoord;
-      
-      attribute vec3 normal;
-      
-    precision mediump float;
-    uniform mat4 modelMatrix; 
-    uniform mat4 projectionMatrix;
-    uniform mat4 viewMatrix;
-    uniform mat4 Matrix;
-    varying vec4 v_normal;
-    varying vec4 v_position;
-
-    varying vec2 v_texCoord;
-
-
-
-    attribute vec3 position;
-    void main() {
-      v_normal =projectionMatrix*viewMatrix*modelMatrix*vec4(normal, 1.0);
-      v_position=projectionMatrix*viewMatrix*modelMatrix*vec4(position, 1.0);
-      v_texCoord = a_texCoord;
-
-        gl_Position = projectionMatrix*viewMatrix*modelMatrix* vec4(position, 1);    }
-    `
-    );
+    this.sceneService.createVertexShader( );
 
     this.sceneService.createProgram();
     this.sceneService.setBuffer();
@@ -242,6 +97,8 @@ if(image==1)
     this.Render();
   }
   Render = () => {
+    
+   
     this.sceneService.render(
       this.modelMatrix,
       this.projectionMatrix,
@@ -320,7 +177,6 @@ if(image==1)
           this.sceneService.addObjectTextureCoordToScene(
             this.objectTextCoordData
           );
-console.log(data);
           this.sceneService.setBuffer();
         });
 
@@ -400,7 +256,30 @@ console.log(data);
   addLight(lightType: LightType) {
     this.lightService.addlight(lightType);
   }
+  setMetalic(event:Event)
+  {
+    const metalicness = parseFloat((event.target as HTMLInputElement).value);
+    this .textureService.setMetalicness(metalicness);
 
+
+  }
+  setRoughness(event:Event)
+  {
+    const roughness = parseFloat((event.target as HTMLInputElement).value);
+    this .textureService.setRoughness(roughness);
+
+
+  } setIOR(event:Event)
+  {
+    const ior= parseFloat((event.target as HTMLInputElement).value);
+    this .textureService.setIOR(ior);
+
+
+  }
+  changeMetallic()
+  {
+    this .textureService.setMetalicness(0.9);
+  }
   uploadfile(event: Event) {
     const files = (event.target as HTMLInputElement).files;
 
@@ -427,6 +306,165 @@ console.log(data);
       };
       reader.readAsText(file);
     }
+  }
+  getTextures()
+  {
+    let canvas = document.createElement('canvas');
+    let object = this .objectService.getPlane();
+let vertexShaderSource = `
+
+
+
+precision mediump float;
+
+attribute vec3 position;
+void main() {
+
+  gl_Position = vec4(position, 1);   
+ }
+
+`;
+let fragmentShaderSource =`precision mediump float;
+uniform vec2 u_resolution;
+vec2 randomGradient(vec2 p) {
+  p = p + 0.02;
+  float x = dot(p, vec2(123.4, 234.5));
+  float y = dot(p, vec2(234.5, 345.6));
+  vec2 gradient = vec2(x, y);
+  gradient = sin(gradient);
+  gradient = gradient * 43758.5453;
+
+  gradient = sin(gradient );
+  return gradient;
+}
+
+
+vec2 quintic(vec2 p) {
+  return p * p * p * (10.0 + p * (-15.0 + p * 6.0));
+}
+
+float perlinNoise(vec2 texcoord, float scale)
+{
+
+ vec2 uv = texcoord*scale;
+
+  vec3 black = vec3(0.0);
+  vec3 white = vec3(1.0);
+  vec3 color = black;
+
+  vec2 gridId = floor(uv);
+  vec2 gridUv = fract(uv);
+  color = vec3(gridId, 0.0);
+  color = vec3(gridUv, 0.0);
+
+  vec2 bl = gridId + vec2(0.0, 0.0);
+  vec2 br = gridId + vec2(1.0, 0.0);
+  vec2 tl = gridId + vec2(0.0, 1.0);
+  vec2 tr = gridId + vec2(1.0, 1.0);
+
+  vec2 gradBl = randomGradient(bl);
+  vec2 gradBr = randomGradient(br);
+  vec2 gradTl = randomGradient(tl);
+  vec2 gradTr = randomGradient(tr);
+
+  vec2 distFromPixelToBl = gridUv - vec2(0.0, 0.0);
+  vec2 distFromPixelToBr = gridUv - vec2(1.0, 0.0);
+  vec2 distFromPixelToTl = gridUv - vec2(0.0, 1.0);
+  vec2 distFromPixelToTr = gridUv - vec2(1.0, 1.0);
+
+  float dotBl = dot(gradBl, distFromPixelToBl);
+  float dotBr = dot(gradBr, distFromPixelToBr);
+  float dotTl = dot(gradTl, distFromPixelToTl);
+  float dotTr = dot(gradTr, distFromPixelToTr);
+
+
+  gridUv = quintic(gridUv);
+
+  float b = mix(dotBl, dotBr, gridUv.x);
+  float t = mix(dotTl, dotTr, gridUv.x);
+  float perlin = mix(b, t, gridUv.y);
+
+  // color = vec3(perlin + 0.2);
+return perlin;
+
+}
+float billowNoise(vec2 uv ,float scale)
+{
+    return abs(perlinNoise(uv,scale));
+
+
+}
+
+float ridgedNoise(vec2 uv ,float scale)
+{
+    float noise = 1.0- billowNoise(uv,scale); 
+    return abs(noise*noise);
+
+
+}
+void main() {
+  // vec3 color = perlinNoise(v_texcoord, 10.0);
+vec2  uv = gl_FragCoord.xy/u_resolution;
+ 
+  gl_FragColor =  vec4(vec3(perlinNoise(uv,5.0)),1.0);
+}`;
+canvas.id = "CursorLayer";
+canvas.width = 500;
+canvas.height = 500;
+const gl= canvas.getContext("webgl");
+if (gl)
+  {
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    const program = gl.createProgram();   
+    if(vertexShader)
+      {
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
+    
+      }
+      if(fragmentShader)
+        {
+          gl.shaderSource(fragmentShader, fragmentShaderSource);
+          gl.compileShader(fragmentShader);
+        }
+        if (fragmentShader && vertexShader && program){
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+        }
+        if (program) {
+      
+          const buffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+          gl.bufferData(gl.ARRAY_BUFFER, object, gl.STATIC_DRAW);
+          
+          
+          const positionLocation = gl.getAttribLocation(program, `position`);
+          gl.enableVertexAttribArray(positionLocation);
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+          gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+              
+          gl.useProgram(program);     
+          let resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+
+          gl.uniform2fv(resolutionLocation , new Float32Array([500,500]));
+          gl.drawArrays(gl.TRIANGLES, 0,  object.length / 3);
+   
+          }
+   
+        }
+
+        var image = canvas.toDataURL("image/png");
+
+        // Create a link element to download the image
+        var link = document.createElement('a');
+        link.href = image;
+        link.download = 'texture.png';
+        link.click();
+
+canvas.remove();
+
   }
 
   uploadImage(event: Event) {

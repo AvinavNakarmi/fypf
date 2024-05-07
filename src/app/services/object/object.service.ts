@@ -6,10 +6,23 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class ObjectService {
-  fileVertexData!: string;
+   fileVertexData!: string
   vertexData!: Float32Array;
 
   constructor(private http: HttpClient) {}
+  getPlane()
+  {
+    const vertexData: number[] = [
+      // Front
+      1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0,
+      1.0, -1.0, -1.0, 1.0,
+
+      // Left
+      -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0,
+      -1.0, 1.0, -1.0, -1.0, -1.0,
+    ]
+    return new Float32Array(vertexData);
+  }
   getCubeVertexData() {
     const vertexData: number[] = [
       // Front
@@ -102,7 +115,6 @@ export class ObjectService {
             break;
         case 'f':
           const faceVertices =[];
-          console.log(tokens);
 
         tokens.forEach((face:any)=>
           {

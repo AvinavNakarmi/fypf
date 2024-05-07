@@ -17,6 +17,9 @@ export class SceneService {
   objectNormal!: Float32Array;
   objectTextureCoord!: Float32Array;
   lights$:Light[]=[]; 
+  fragmentShaderSource!:string;
+  vertexShaderSource!:string;
+
 
   constructor(private lightService:LightService,private objectService:ObjectService) {
     this.lightService.getLights().subscribe(lights=>this.lights$=lights);
@@ -50,10 +53,10 @@ export class SceneService {
 
   }
 
-  createVertexShader(shader: string) {
+  createVertexShader() {
     if (this.gl) {
       if (this.vertexShader) {
-        this.gl.shaderSource(this.vertexShader, shader);
+        this.gl.shaderSource(this.vertexShader, this.vertexShaderSource);
         this.gl.compileShader(this.vertexShader);
         if (!this.gl.getShaderParameter(this.vertexShader, this.gl.COMPILE_STATUS)) {
           console.error('Vertex shader compilation failed:', this.gl.getShaderInfoLog(this.vertexShader));
@@ -64,11 +67,24 @@ export class SceneService {
     }
     
   }
+  setShader( shader:string ,type:string)
+  {
+if(type=="vertex")
+  {
+    this.vertexShaderSource =shader;
+  }
+  
+if(type=="frag")
+  {
+    this.fragmentShaderSource = shader;
+  }
+  }
 
-  createFragmentShader(shader: string) {
+
+  createFragmentShader() {
     if (this.gl) {
       if (this.fragmentShader) {
-        this.gl.shaderSource(this.fragmentShader, shader);
+        this.gl.shaderSource(this.fragmentShader, this.fragmentShaderSource);
         this.gl.compileShader(this.fragmentShader);
         if (!this.gl.getShaderParameter(this.fragmentShader, this.gl.COMPILE_STATUS)) {
           console.error('Vertex shader compilation failed:', this.gl.getShaderInfoLog(this.fragmentShader));

@@ -1,8 +1,5 @@
 precision mediump float;
-
 uniform vec2 u_resolution;
-varying vec2 v_texcoord;
-varying vec4 v_normal;
 vec2 randomGradient(vec2 p) {
   p = p + 0.02;
   float x = dot(p, vec2(123.4, 234.5));
@@ -81,8 +78,7 @@ float ridgedNoise(vec2 uv ,float scale)
 }
 void main() {
   // vec3 color = perlinNoise(v_texcoord, 10.0);
-  vec3 normal = v_normal.xyz;
 vec2  uv = gl_FragCoord.xy/u_resolution;
  
-  gl_FragColor =  vec4(vec3(ridgedNoise(uv, 10.0)), 1.0);
+  gl_FragColor =  vec4(vec3(ridgedNoise(uv,5.0)),1.0);
 }
