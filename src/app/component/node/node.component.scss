@@ -1,0 +1,21 @@
+.node
+{
+    background-color: gray;
+    width:150px;
+
+    .connection
+    {
+        height: 20px;        
+        width:20px;
+        border-radius: 100%;
+        &-input
+        {
+            background-color: green;
+        }
+        &-output
+        {
+            background-color: red;
+        }
+        
+    }
+}

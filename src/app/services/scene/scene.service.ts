@@ -93,10 +93,19 @@ if(type=="frag")
       }
     }
   }
-  createProgram() {
+  createProgram( reattach:boolean=false) {
 
     if (this.gl && this.fragmentShader && this.vertexShader && this.program){
-      this.gl.attachShader(this.program, this.vertexShader);
+      
+      if(!reattach)
+      {
+        this.gl.attachShader(this.program, this.vertexShader);
+      }
+      else{
+
+      this.gl.detachShader(this.program,this.fragmentShader);
+      }
+      
       this.gl.attachShader(this.program, this.fragmentShader);
       this.gl.linkProgram(this.program);
     }

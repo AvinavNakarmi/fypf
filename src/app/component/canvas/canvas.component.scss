@@ -4,6 +4,12 @@
     position:relative;
 
     background-color: rgb(51, 51, 51);
+    .get-texture
+    { 
+        z-index: 2;
+        position: absolute;
+        right: 10px;
+    } 
 }
 
 .context-menu{
@@ -26,7 +32,7 @@
     {
         cursor: pointer;
         
-        &:hover
+         &:hover
         {
             background-color: red;
         }

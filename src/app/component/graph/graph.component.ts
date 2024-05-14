@@ -1,5 +1,5 @@
-import { Component, ElementRef, Injector, ViewChild } from "@angular/core";
-import { createEditor } from "./editor";
+import { Component } from "@angular/core";
+import { ControlModel } from "src/app/model/control.model";
 
 
 @Component({
@@ -8,14 +8,23 @@ import { createEditor } from "./editor";
   styleUrls: ['./graph.component.scss']
 })
 export class GraphComponent {
-  constructor(private injector: Injector) {}
-  
-  @ViewChild("rete") container!: ElementRef;
-
-  async ngAfterViewInit() {
-    await createEditor(this.container.nativeElement, this.injector)
-
-  }
- 
-
+title="render Node";
+controls:ControlModel[]=[{
+  isInput:true,
+  name:"metalicness",
+  dataType:"text",
+  defaultValue:0.001
+},
+{
+  isInput:true,
+  name:"roughness",
+  dataType:"text",
+  defaultValue:0.001
+},
+{
+  isInput:true,
+  name:"IOR",
+  dataType:"text",
+  defaultValue:1.45
+}]
 }

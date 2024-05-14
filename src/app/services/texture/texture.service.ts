@@ -208,8 +208,7 @@ else
     
     this.rough=value;
     this.sceneService.setShader(this.getFragmentShader(),"frag");
-    this.sceneService.createFragmentShader();
-    this.sceneService.createProgram();
+    this.sceneService.createProgram(true);
     console.log("rough",value);
     
   }
@@ -217,8 +216,7 @@ else
   {
     this.metal=value;
     this.sceneService.setShader(this.getFragmentShader(),"frag");
-    this.sceneService.createFragmentShader();
-    this.sceneService.createProgram();
+    this.sceneService.createProgram(true);
     console.log("metal",value);
 
   }
@@ -228,8 +226,8 @@ else
     
     this.ior=value;
     this.sceneService.setShader(this.getFragmentShader(),"frag");
-    this.sceneService.createFragmentShader();
-    this.sceneService.createProgram();
+    this.sceneService.createProgram(true);
+
     console.log("ior",value);
 
 
