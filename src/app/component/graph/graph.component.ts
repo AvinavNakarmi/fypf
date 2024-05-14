@@ -2,6 +2,7 @@ import { Component } from "@angular/core";
 import { ControlModel } from "src/app/model/control.model";
 
 
+
 @Component({
   selector: 'app-graph',
   templateUrl: './graph.component.html',

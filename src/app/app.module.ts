@@ -10,15 +10,14 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { GraphComponent } from './component/graph/graph.component';
-import { RandomComponent } from './component/random/random.component';
 import { NodeComponent } from './component/node/node.component'; 
+
 @NgModule({
   declarations: [
     AppComponent,
     CanvasComponent,
     LightSettingsComponent,
     GraphComponent,
-    RandomComponent,
     NodeComponent,
   ],
   imports: [
@@ -28,7 +27,7 @@ import { NodeComponent } from './component/node/node.component';
     FormsModule,
     HttpClientModule,
     ToastrModule.forRoot( {timeOut: 1000,positionClass: 'toast-top-left',
-    preventDuplicates: true,progressBar: true})
+    preventDuplicates: true,progressBar: true}),
   ],
   providers: [],
   bootstrap: [AppComponent]
