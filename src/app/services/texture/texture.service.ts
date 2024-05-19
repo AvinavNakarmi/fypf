@@ -1,32 +1,26 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { SceneService } from '../scene/scene.service';
+import { TextureType } from 'src/app/enum/texture-type';
+import { TextureModel } from 'src/app/model/texture.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TextureService {
-  metalicness:Subject<number> =new Subject();
-  roughness:Subject<number> =new Subject();
-  IOR:Subject<number> =new Subject();
+  metalicness: Subject<number> = new Subject();
+  roughness: Subject<number> = new Subject();
+  IOR: Subject<number> = new Subject();
 
+  metal: string = 'float(0.5)';
+  rough: string = 'float(0.1)';
+  color: string = 'vec3(1.0)';
 
-metal:number=0.1;
- rough:number=0.1;
-  ior:number=1.319; 
-  
+  ior: number = 1.319;
 
-
-
-
-  constructor( private sceneService:SceneService) { 
-    
-
-  }
-getVertexShader()
-{
-  const vertexShader =
-  `
+  constructor(private sceneService: SceneService) {}
+  getVertexShader() {
+    const vertexShader = `
   attribute vec2 a_texCoord;
   
   attribute vec3 normal;
@@ -51,19 +45,22 @@ void main() {
 
     gl_Position = projectionMatrix*viewMatrix*modelMatrix* vec4(position, 1.0);    }
 `;
-return vertexShader;
- 
-}
-getFragmentShader()
-{
-  const fragmentShader= `
+    return vertexShader;
+  }
+  getFragmentShader() {
+    const fragmentShader = `
   #define PI 3.14
   #define POINT_LIGHT 0
   #define DIRECT_LIGHT 1
 
   precision mediump float;
   varying vec2 v_texCoord;
-  uniform sampler2D u_image;
+  uniform sampler2D u_image;  
+  uniform sampler2D u_roughnessImageTexture;
+  uniform sampler2D u_colorImageTexture;
+  uniform sampler2D u_normalImageTexture;
+  uniform sampler2D u_metalImageTexture;
+
 
 
   uniform vec3 lightColor [10];
@@ -82,6 +79,163 @@ getFragmentShader()
     vec3 position;
     float intencity;
   };
+  
+float whiteNoise(vec2 p)
+{
+    float random = dot(p,vec2(12.,78.));
+    random = sin(random);
+    random =random* 43758.5453;
+    random =fract(random);
+    return random;
+}
+float valueNoise(vec2 uv)
+{
+    vec2 gridUV = fract(uv);
+    vec2 gridID = floor(uv);
+    gridUV =smoothstep(0.0,1.0, gridUV);
+
+
+
+vec3 color =vec3(gridUV,0.0);
+float bottomLeft = whiteNoise(gridID);
+float bottomRight = whiteNoise(gridID+vec2(1.0,0.0));
+float topLeft = whiteNoise(gridID+vec2(0.0,1.0));
+float topRight = whiteNoise(gridID+ vec2(1.0,1.0));
+
+float bottom  = mix(bottomLeft,bottomRight,gridUV.x); 
+float top  = mix(topLeft,topRight,gridUV.x); 
+
+float valueNoise = mix(bottom,top,gridUV.y); 
+
+
+
+
+    return valueNoise;
+}
+float layeredValueNoise(vec2 uv, int itter,float scale )
+{
+  uv=uv* scale;
+ float layeredValue = 0.0;
+    float uvMultiplier =2.0;
+    float uvsubtractor =1.0;
+
+    for(int i=0;i<=10 ;i++)
+    {
+        if(itter<=i)
+        {
+            break;
+        }
+        uvMultiplier*=2.0;
+        uvsubtractor/=2.0;
+
+        layeredValue += valueNoise(uv*uvMultiplier)*uvsubtractor; 
+
+    }
+    return layeredValue;
+
+
+}
+
+vec2 randomGradient(vec2 p) {
+  p = p + 0.02;
+  float x = dot(p, vec2(123.4, 234.5));
+  float y = dot(p, vec2(234.5, 345.6));
+  vec2 gradient = vec2(x, y);
+  gradient = sin(gradient);
+  gradient = gradient * 43758.5453;
+
+  gradient = sin(gradient );
+  return gradient;
+}
+
+
+vec2 quintic(vec2 p) {
+  return p * p * p * (10.0 + p * (-15.0 + p * 6.0));
+}
+
+float perlinNoise(vec2 texcoord, float scale)
+{
+
+ vec2 uv = texcoord*scale;
+
+  vec3 black = vec3(0.9);
+  vec3 white = vec3(1.0);
+  vec3 color = black;
+
+  vec2 gridId = floor(uv);
+  vec2 gridUv = fract(uv);
+  color = vec3(gridId, 0.0);
+  color = vec3(gridUv, 0.0);
+
+  vec2 bl = gridId + vec2(0.0, 0.0);
+  vec2 br = gridId + vec2(1.0, 0.0);
+  vec2 tl = gridId + vec2(0.0, 1.0);
+  vec2 tr = gridId + vec2(1.0, 1.0);
+
+  vec2 gradBl = randomGradient(bl);
+  vec2 gradBr = randomGradient(br);
+  vec2 gradTl = randomGradient(tl);
+  vec2 gradTr = randomGradient(tr);
+
+  vec2 distFromPixelToBl = gridUv - vec2(0.0, 0.0);
+  vec2 distFromPixelToBr = gridUv - vec2(1.0, 0.0);
+  vec2 distFromPixelToTl = gridUv - vec2(0.0, 1.0);
+  vec2 distFromPixelToTr = gridUv - vec2(1.0, 1.0);
+
+  float dotBl = dot(gradBl, distFromPixelToBl);
+  float dotBr = dot(gradBr, distFromPixelToBr);
+  float dotTl = dot(gradTl, distFromPixelToTl);
+  float dotTr = dot(gradTr, distFromPixelToTr);
+
+
+  gridUv = quintic(gridUv);
+
+  float b = mix(dotBl, dotBr, gridUv.x);
+  float t = mix(dotTl, dotTr, gridUv.x);
+  float perlin = mix(b, t, gridUv.y);
+
+  // color = vec3(perlin + 0.2);
+return perlin;
+
+}
+float billowNoise(vec2 uv ,float scale)
+{
+    return abs(perlinNoise(uv,scale));
+
+
+}
+
+float ridgedNoise(vec2 uv ,float scale)
+{
+    float noise = 1.0- billowNoise(uv,scale); 
+    return abs(noise*noise);
+
+
+}
+vec3 calculateNormals(vec2 uv)
+{
+  float diff= 0.0001;
+  float height = .0001;
+  float p1 = perlinNoise((uv +vec2(diff,0.0)),20.0);
+  float p2 = perlinNoise((uv -vec2(diff,0.0)),20.0);
+  float p3 = perlinNoise((uv +vec2(0.0,diff)),20.0);
+  float p4 = perlinNoise((uv -vec2(0.0,diff)),20.0);
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
+vec3 calculateNormals2(vec2 uv,float p1,float p2,float p3,float p4)
+{
+  float diff= 0.0001;
+  float height = .0001;
+  // float p1 = perlinNoise((uv +vec2(diff,0.0)),20.0);
+  // float p2 = perlinNoise((uv -vec2(diff,0.0)),20.0);
+  // float p3 = perlinNoise((uv +vec2(0.0,diff)),20.0);
+  // float p4 = perlinNoise((uv -vec2(0.0,diff)),20.0);
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
 
   vec3 diffusedBRDF(vec3 color, vec3 incomeLight,vec3 N) {
     vec3 diffusedColor = (color / PI) * dot(incomeLight, N.xyz); 
@@ -127,11 +281,19 @@ getFragmentShader()
     return 0.0;
 
   }
+  float RGBtoBW(vec3 color )
+  {
+    return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);  
+  }
   
+  float RGBtoBW(vec4 color)
+  {
+    return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);  
+  }
 void main() {
-vec3 meshColor = vec3(1.0);
-float metalicness = float(${this.metal});
-float roughness = float(${this.rough});
+vec3 meshColor = ${this.color};
+float metalicness = ${this.metal};
+float roughness = ${this.rough};
 float ior = float(${this.ior});
 
 vec3 camera = vec3(0.0,0.0,5.0);
@@ -175,7 +337,7 @@ for(int i = 0; i <  MAX_LIGHTS; i++) {
 }
 if(image==1)
 {
-  gl_FragColor =finalColor*texture2D(u_image, v_texCoord);
+  gl_FragColor = vec4(finalColor.xyz* RGBtoBW(texture2D(u_image, v_texCoord)),1.0);
 }
 else
 {
@@ -185,53 +347,88 @@ else
 }
 
   `;
-  return fragmentShader;
-}
+    return fragmentShader;
+  }
 
-  
-  addRoughness()
-  {
-    return `roughness = float(${this.rough});`;
-  }
-  addMetalicness()
-  {
-    return ` metalicness  = float(${this.metal});`;
-  }
- 
-  addIOR()
-  {
-    return ` ior = float(${this.ior});`;
-  }
-  
-  setRoughness(value:number)
-  {
-    
-    this.rough=value;
-    this.sceneService.setShader(this.getFragmentShader(),"frag");
+  setRoughness(value: string) {
+    this.rough = value;
+    this.sceneService.setShader(this.getFragmentShader(), 'frag');
     this.sceneService.createProgram(true);
-    console.log("rough",value);
-    
+    console.log('rough', value);
   }
-  setMetalicness(value:number)
-  {
-    this.metal=value;
-    this.sceneService.setShader(this.getFragmentShader(),"frag");
-    this.sceneService.createProgram(true);
-    console.log("metal",value);
 
+  setColor(value: string) {
+    this.color = value;
+    this.sceneService.setShader(this.getFragmentShader(), 'frag');
+    this.sceneService.createProgram(true);
   }
- 
-  setIOR(value:number)
-  {
-    
-    this.ior=value;
-    this.sceneService.setShader(this.getFragmentShader(),"frag");
+  setMetalicness(value: string) {
+    this.metal = value;
+    this.sceneService.setShader(this.getFragmentShader(), 'frag');
+    this.sceneService.createProgram(true);
+    console.log('metal', value);
+  }
+
+  setIOR(value: number) {
+    this.ior = value;
+    this.sceneService.setShader(this.getFragmentShader(), 'frag');
     this.sceneService.createProgram(true);
 
-    console.log("ior",value);
-
-
-
+    console.log('ior', value);
   }
 
+  setValue(value: string, material: string) {
+    if (material == 'metallic') {
+      this.setMetalicness(value);
+      return;
+    }
+    if (material == 'roughness') {
+      this.setRoughness(value);
+      return;
+    }
+    if (material == 'color') {
+      this.setColor(value);
+      return;
+    }
+  }
+  setTexture(texture: TextureModel, material: string) {
+    let proceduralTexture;
+
+    if (texture.name == TextureType.PERLIN) {
+      proceduralTexture = ` perlinNoise(v_texCoord,float(${texture.scale}))`;
+    } else if (texture.name == TextureType.VALUE) {
+      proceduralTexture = ` layeredValueNoise(v_texCoord,int(${texture.itter}),float(${texture.scale}))`;
+    } else if (texture.name == TextureType.BILLOW) {
+      proceduralTexture = ` billowNoise(v_texCoord,float(${texture.scale}))`;
+    } else if (texture.name == TextureType.RIDGED) {
+      proceduralTexture = ` ridgedNoise(v_texCoord,float(${texture.scale}))`;
+    } else {
+      proceduralTexture = 'float(0.5)';
+    }
+
+    if (texture.lower > texture.upper) {
+      proceduralTexture = ` clamp(1.0-${proceduralTexture},${texture.upper},${texture.lower})`;
+    } else {
+      proceduralTexture = ` clamp(${proceduralTexture},${texture.lower},${texture.upper})`;
+    }
+    if (material == 'color') {
+      proceduralTexture = `vec3(${proceduralTexture})`;
+      const color1 = this.hexToRgb2(texture.color1);
+      const color2 = this.hexToRgb2(texture.color2);
+      proceduralTexture = `mix(vec3(float(${color1[0] / 255}),float(${
+        color1[1] / 255
+      }),float(${color1[2] / 255})), vec3(float(${color2[0]/255}),float(${
+        color2[1]/255
+      }),float(${color2[2]/255})), ${proceduralTexture});`;
+    }
+    this.setValue(proceduralTexture, material);
+  }
+  hexToRgb2(hex: string) {
+    hex = hex.replace(/^#/, '');
+
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.substring(2, 4), 16);
+    var b = parseInt(hex.substring(4, 6), 16);
+    return [r, g, b];
+  }
 }

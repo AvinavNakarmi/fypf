@@ -256,30 +256,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   addLight(lightType: LightType) {
     this.lightService.addlight(lightType);
   }
-  setMetalic(event:Event)
-  {
-    const metalicness = parseFloat((event.target as HTMLInputElement).value);
-    this .textureService.setMetalicness(metalicness);
-
-
-  }
-  setRoughness(event:Event)
-  {
-    const roughness = parseFloat((event.target as HTMLInputElement).value);
-    this .textureService.setRoughness(roughness);
-
-
-  } setIOR(event:Event)
-  {
-    const ior= parseFloat((event.target as HTMLInputElement).value);
-    this .textureService.setIOR(ior);
-
-
-  }
-  changeMetallic()
-  {
-    this .textureService.setMetalicness(0.9);
-  }
+  
+  
   uploadfile(event: Event) {
     const files = (event.target as HTMLInputElement).files;
 
@@ -468,7 +446,7 @@ canvas.remove();
   }
 
   uploadImage(event: Event) {
-    debugger
+    
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0]; // Get the selected file
     if (!file) return; // If no file is selected, return
@@ -483,7 +461,6 @@ canvas.remove();
   
       // Optionally, you can add an onload event handler to execute code when the image is loaded
       image.onload = () => {
-      this.sceneService.renderImage(image);
 
       }
     }

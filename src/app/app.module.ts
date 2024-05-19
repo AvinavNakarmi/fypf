@@ -9,16 +9,12 @@ import { ToastrModule } from 'ngx-toastr';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { GraphComponent } from './component/graph/graph.component';
-import { NodeComponent } from './component/node/node.component'; 
 
 @NgModule({
   declarations: [
     AppComponent,
     CanvasComponent,
     LightSettingsComponent,
-    GraphComponent,
-    NodeComponent,
   ],
   imports: [
     BrowserModule,

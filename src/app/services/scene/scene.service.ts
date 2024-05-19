@@ -77,6 +77,7 @@ if(type=="vertex")
 if(type=="frag")
   {
     this.fragmentShaderSource = shader;
+    this.createFragmentShader();
   }
   }
 
@@ -96,7 +97,6 @@ if(type=="frag")
   createProgram( reattach:boolean=false) {
 
     if (this.gl && this.fragmentShader && this.vertexShader && this.program){
-      
       if(!reattach)
       {
         this.gl.attachShader(this.program, this.vertexShader);
@@ -105,7 +105,6 @@ if(type=="frag")
 
       this.gl.detachShader(this.program,this.fragmentShader);
       }
-      
       this.gl.attachShader(this.program, this.fragmentShader);
       this.gl.linkProgram(this.program);
     }
@@ -225,25 +224,95 @@ var flattenedPositionArray = [].concat.apply([], lightPositions);
 
     }
   }
-  renderImage(image:any) {
+  renderImageTexture(image:any,type:string) {
     if(this.gl && this.program)
-      {
-   
-     
-var texture = this.gl.createTexture();
-this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-
-// Set the parameters so we can render any size image.
+      { 
+switch (type) {
+  case "metallic":
+var metallicTexture = this.gl.createTexture();
+this.gl.bindTexture(this.gl.TEXTURE_2D, metallicTexture);
 this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
 this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
 this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-
-// Upload the image into the texture.
 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
-let ImageBoolLocation = this.gl.getUniformLocation(this.program, "image");
-this.gl.uniform1i(ImageBoolLocation,1);
+let ImageBoolLocation = this.gl.getUniformLocation(this.program, "u_metalImageTexture");
+ if (ImageBoolLocation === -1) {
+  console.error("Could not find the uniform 'heightmap' in the shader program.");
+  return;
+}
+// Set the texture unit to 0
+this.gl.activeTexture(this.gl.TEXTURE0);
+this.gl.bindTexture(this.gl.TEXTURE_2D, metallicTexture);
 
+this.gl.uniform1i(ImageBoolLocation,0);
+  // Use the shader program
+  this.gl.useProgram(this.program);
+
+    break;
+
+    case "roughness":
+      var roughnessTexture = this.gl.createTexture();
+      this.gl.bindTexture(this.gl.TEXTURE_2D, roughnessTexture);
+      this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D,this. gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+      let ImageBoolLocation2 = this.gl.getUniformLocation(this.program, "u_roughnessImageTexture");
+       if (ImageBoolLocation2 === -1) {
+        console.error("Could not find the uniform 'heightmap' in the shader program.");
+        return;
+      }
+      // Set the texture unit to 0
+      this.gl.activeTexture(this.gl.TEXTURE1);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, roughnessTexture);
+      
+this.gl.uniform1i(ImageBoolLocation2,1);
+// Use the shader program
+this.gl.useProgram(this.program);
+
+      
+    break;
+    case "color":
+      var colorTexture = this.gl.createTexture();
+
+this.gl.bindTexture(this.gl.TEXTURE_2D, colorTexture);
+    
+    break;
+    case "normal":
+var normalTexture = this.gl.createTexture();
+this.gl.bindTexture(this.gl.TEXTURE_2D, normalTexture);
+    
+    break;
+
+  default:
+
+
+    break;
+}
+
+let ImageBoolLocation=null;
+if(type=="metallic")
+  {
+  }
+  
+if(type=="roughness")
+  {
+    ImageBoolLocation = this.gl.getUniformLocation(this.program, "u_roughnessImageTexture");
+    
+  }
+  if(type=="color")
+    {
+      ImageBoolLocation = this.gl.getUniformLocation(this.program, "u_colorImageTexture");
+      
+    }
+    if(type=="normal")
+      {
+        ImageBoolLocation = this.gl.getUniformLocation(this.program, "u_normalImageTexture");
+        
+      }
+ 
 
       }
  

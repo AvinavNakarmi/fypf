@@ -45,8 +45,9 @@ float valueNoise = mix(bottom,top,gridUV.y);
 
     return valueNoise;
 }
-float layeredValueNoise(vec2 uv, int itter)
+float layeredValueNoise(vec2 uv, int itter,float scale )
 {
+  uv=uv* scale;
  float layeredValue = 0.0;
     float uvMultiplier =2.0;
     float uvsubtractor =1.0;
@@ -156,6 +157,18 @@ vec3 calculateNormals(vec2 uv)
   return normal;
 
 }
+vec3 calculateNormals2(vec2 uv,float p1,float p2,float p3,float p4)
+{
+  float diff= 0.0001;
+  float height = .0001;
+  // float p1 = perlinNoise((uv +vec2(diff,0.0)),20.0);
+  // float p2 = perlinNoise((uv -vec2(diff,0.0)),20.0);
+  // float p3 = perlinNoise((uv +vec2(0.0,diff)),20.0);
+  // float p4 = perlinNoise((uv -vec2(0.0,diff)),20.0);
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
 struct Light {
   int lightType;
   vec3 color;
@@ -183,7 +196,7 @@ float schlickGGX(float nDotV, float roughness) {
 }
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
-  return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+  return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 vec3 specularBRDF(float nDotL, float nDotV, float roughness, vec3 F0) {
   vec3 top = normalDistribution(nDotL, roughness) * schlickGGX(nDotL, roughness) * fresnelSchlick(nDotL, F0);
@@ -201,30 +214,38 @@ float lightAttenuation(Light light) {
   }
   if(light.lightType == POINT_LIGHT) {
     float distanceSquared = distance(normalize(v_position.xyz), light.position);
-    float attenuation = 1.0 + 1.0 * distanceSquared + 2.0 * distanceSquared * distanceSquared;
+    float attenuation =  1.0 / (1.0 + 0.09 * distanceSquared + 0.032 * distanceSquared * distanceSquared);
     return attenuation;
 
   }
   return 0.0;
 
 }
-
+  float RGBtoBW(vec3 color )
+  {
+    return  ((0.21*color.r)+(0.72*color.g)+(0.7* color.b));  
+  }
+  
+  float RGBtoBW(vec4 color)
+  {
+    return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);
+  }
 void main() {
   Light lights[10];
   vec3 meshColor = vec3(1.0);
-  lights[0] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(1.0, 1., 0.9), 2.0);
+  lights[0] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(1.0, 1.0, 1.0), 20.0);
   // lights[1] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(-1.0, -.0, 1.), 20.0);
 
-  float metalicness = 0.01;
-  float roughness = 1.0;
-  float ior = 1.45;
+  float metalicness = 0.99;
+  float roughness = .3;
+  float ior = 0.1;
 
   vec3 F0 = fresnelFactor(ior);
 // vec2  uv = gl_FragCoord.xy/u_resolution;
 vec2  uv = v_texcoord;
 
-  // vec3 N = normalize(v_normal.xyz);
-  vec3 N = normalize( calculateNormals(uv).xyz+ v_normal.xyz );
+  vec3 N = normalize(v_normal.xyz);
+  // vec3 N = normalize( calculateNormals(uv).xyz+ v_normal.xyz );
 
   float nDotV = dot(N, u_camera);
   vec4 finalColor = vec4(0.0);

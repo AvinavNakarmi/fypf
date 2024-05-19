@@ -1,8 +1,8 @@
 export enum TextureType {
-    PERLIN,
-    VALUE,
-    VORONOI,
-    BILLOW,
-    RIDGED
+    PERLIN="perlin",
+    VALUE="value",
+    VORONOI="voromoi",
+    BILLOW="billow",
+    RIDGED="ridged"
 
 }
