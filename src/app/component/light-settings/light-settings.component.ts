@@ -23,6 +23,7 @@ export class LightSettingsComponent implements OnInit {
       isTexture: false,
       isImageTexture: false,
       ImageTexture: null,
+      ImgSrc: "",
 
       isSetImageTexture: false,
       TextureProperties: [
@@ -41,6 +42,7 @@ export class LightSettingsComponent implements OnInit {
       isTexture: false,
       isImageTexture: false,
       ImageTexture: null,
+      ImgSrc: "",
 
       isSetImageTexture: false,
       TextureProperties: [
@@ -79,7 +81,7 @@ export class LightSettingsComponent implements OnInit {
     },
     {
       name: 'normal',
-      value: 0.5,
+      value: "v_normal.xyz",
       isTexture: false,
       isImageTexture: false,
       ImageTexture: null,
@@ -162,6 +164,7 @@ export class LightSettingsComponent implements OnInit {
     }
   changeValue(event: Event) {
 
+  
     if(this.currentMaterialProperties.name=="color")
       {
         this.currentMaterialProperties.value =(event.target as HTMLInputElement).value;
@@ -279,7 +282,6 @@ export class LightSettingsComponent implements OnInit {
   toggle(index: number) {
     this.fieldToggle = index;
     this.currentMaterialProperties = this.materialProperties[index - 2];
-    console.log(this.currentMaterialProperties);
   }
 
   setImageTexture(event: Event) {
@@ -336,7 +338,9 @@ export class LightSettingsComponent implements OnInit {
     reader.onload = (event) => {
       const imageUrl = event.target?.result as string; // Get the data URL of the uploaded image
       this.currentMaterialProperties.ImageTexture=new Image();
-      this.currentMaterialProperties.ImageTexture.src = imageUrl; // Set the src attribute of the Image object to the data URL
+      this.currentMaterialProperties.ImageTexture.src = imageUrl;
+      this.currentMaterialProperties.ImgSrc = imageUrl; // Set the src attribute of the Image object to the data URL
+       // Set the src attribute of the Image object to the data URL
       // Optionally, you can add an onload event handler to execute code when the image is loaded
       this.currentMaterialProperties.ImageTexture.onload = () => {
         this.sceneService.renderImageTexture(this.currentMaterialProperties.ImageTexture

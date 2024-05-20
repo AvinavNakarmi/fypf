@@ -8,6 +8,12 @@ uniform float u_time;
 #define POINT_LIGHT 0
 #define DIRECT_LIGHT 1
 
+#define PERLIN 1
+#define RIDGID 2
+#define BILLOW 3
+#define VALUE  4
+
+
 
 #define PI 3.14
 
@@ -145,14 +151,53 @@ float ridgedNoise(vec2 uv ,float scale)
 
 
 }
-vec3 calculateNormals(vec2 uv)
+vec3 calculateNormals(vec2 uv, int textureIndex,float scale)
 {
   float diff= 0.0001;
   float height = .0001;
-  float p1 = perlinNoise((uv +vec2(diff,0.0)),20.0);
-  float p2 = perlinNoise((uv -vec2(diff,0.0)),20.0);
-  float p3 = perlinNoise((uv +vec2(0.0,diff)),20.0);
-  float p4 = perlinNoise((uv -vec2(0.0,diff)),20.0);
+  float p1=1.0 ;
+  float p2=1.0 ;
+  float p3=1.0 ;
+  float p4=1.0 ;
+  
+  if(textureIndex ==1)
+  {
+   p1 = perlinNoise((uv +vec2(diff,0.0)),scale);
+   p2 = perlinNoise((uv -vec2(diff,0.0)),scale);
+   p3 = perlinNoise((uv +vec2(0.0,diff)),scale);
+   p4 = perlinNoise((uv -vec2(0.0,diff)),scale);
+    
+  }
+  if(textureIndex ==3)
+  {
+   p1 = billowNoise((uv +vec2(diff,0.0)),scale);
+   p2 = billowNoise((uv -vec2(diff,0.0)),scale);
+   p3 = billowNoise((uv +vec2(0.0,diff)),scale);
+   p4 = billowNoise((uv -vec2(0.0,diff)),scale);
+    
+  }if(textureIndex ==2)
+  {
+   p1 = ridgedNoise((uv +vec2(diff,0.0)),scale);
+   p2 = ridgedNoise((uv -vec2(diff,0.0)),scale);
+   p3 = ridgedNoise((uv +vec2(0.0,diff)),scale);
+   p4 = ridgedNoise((uv -vec2(0.0,diff)),scale);
+    
+  }
+  
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
+vec3 calculateNormals(vec2 uv,float scale,int  itter)
+{
+  float diff= 0.0001;
+  float height = .0001;
+   float p1 = layeredValueNoise((uv +vec2(diff,0.0)),itter,scale);
+   float p2 = layeredValueNoise((uv -vec2(diff,0.0)),itter,scale);
+   float p3 = layeredValueNoise((uv +vec2(0.0,diff)),itter,scale);
+   float p4 = layeredValueNoise((uv -vec2(0.0,diff)),itter,scale);
+    
+  
   vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
   return normal;
 
@@ -236,7 +281,7 @@ void main() {
   lights[0] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(1.0, 1.0, 1.0), 20.0);
   // lights[1] = Light(POINT_LIGHT, vec3(1.0, 1.0, 1.0), vec3(-1.0, -.0, 1.), 20.0);
 
-  float metalicness = 0.99;
+  float metalicness = 0.9;
   float roughness = .3;
   float ior = 0.1;
 
@@ -244,7 +289,12 @@ void main() {
 // vec2  uv = gl_FragCoord.xy/u_resolution;
 vec2  uv = v_texcoord;
 
-  vec3 N = normalize(v_normal.xyz);
+  // Calculate procedural normals
+  vec3 proceduralNormals = calculateNormals(v_texcoord,20.,1);
+  
+  // // Mix procedural normals with surface normals
+  vec3 N = normalize(mix(v_normal.xyz, proceduralNormals, 0.5)); // Adjust the blend factor (0.5) as needed
+
   // vec3 N = normalize( calculateNormals(uv).xyz+ v_normal.xyz );
 
   float nDotV = dot(N, u_camera);

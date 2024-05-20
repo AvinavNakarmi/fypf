@@ -27,7 +27,7 @@
   {{ currentMaterialProperties.name }}
   <div *ngIf="!currentMaterialProperties.isTexture">
     <label for=""> {{ currentMaterialProperties.name }}</label>
-    <input *ngIf ="currentMaterialProperties.name!='color'"
+    <input *ngIf ="currentMaterialProperties.name!='color'&&currentMaterialProperties.name!='normal'"
       type="number"
       name=""
       min="0.01"
@@ -123,7 +123,7 @@
       currentMaterialProperties.isImageTexture
     "
   >
-    <input type="file" (change)="setImageTexture($event)" />
+    <input type="file" (change)="setImageTexture($event)" [value]="currentMaterialProperties.imgSrc"/>
     <label for="">factor</label>
     <input type="number" />
     <button (click)="closeImageComponent()">close</button>

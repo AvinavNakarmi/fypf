@@ -15,6 +15,8 @@ export class TextureService {
   metal: string = 'float(0.5)';
   rough: string = 'float(0.1)';
   color: string = 'vec3(1.0)';
+  normal: string = 'normalize(v_normal.xyz)';
+
 
   ior: number = 1.319;
 
@@ -212,14 +214,54 @@ float ridgedNoise(vec2 uv ,float scale)
 
 
 }
-vec3 calculateNormals(vec2 uv)
+
+vec3 calculateNormals(vec2 uv, int textureIndex,float scale)
 {
   float diff= 0.0001;
   float height = .0001;
-  float p1 = perlinNoise((uv +vec2(diff,0.0)),20.0);
-  float p2 = perlinNoise((uv -vec2(diff,0.0)),20.0);
-  float p3 = perlinNoise((uv +vec2(0.0,diff)),20.0);
-  float p4 = perlinNoise((uv -vec2(0.0,diff)),20.0);
+  float p1=1.0 ;
+  float p2=1.0 ;
+  float p3=1.0 ;
+  float p4=1.0 ;
+  
+  if(textureIndex ==1)
+  {
+   p1 = perlinNoise((uv +vec2(diff,0.0)),scale);
+   p2 = perlinNoise((uv -vec2(diff,0.0)),scale);
+   p3 = perlinNoise((uv +vec2(0.0,diff)),scale);
+   p4 = perlinNoise((uv -vec2(0.0,diff)),scale);
+    
+  }
+  if(textureIndex ==3)
+  {
+   p1 = billowNoise((uv +vec2(diff,0.0)),scale);
+   p2 = billowNoise((uv -vec2(diff,0.0)),scale);
+   p3 = billowNoise((uv +vec2(0.0,diff)),scale);
+   p4 = billowNoise((uv -vec2(0.0,diff)),scale);
+    
+  }if(textureIndex ==2)
+  {
+   p1 = ridgedNoise((uv +vec2(diff,0.0)),scale);
+   p2 = ridgedNoise((uv -vec2(diff,0.0)),scale);
+   p3 = ridgedNoise((uv +vec2(0.0,diff)),scale);
+   p4 = ridgedNoise((uv -vec2(0.0,diff)),scale);
+    
+  }
+  
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
+vec3 calculateNormals(vec2 uv,float scale,int  itter)
+{
+  float diff= 0.0001;
+  float height = .0001;
+   float p1 = layeredValueNoise((uv +vec2(diff,0.0)),itter,scale);
+   float p2 = layeredValueNoise((uv -vec2(diff,0.0)),itter,scale);
+   float p3 = layeredValueNoise((uv +vec2(0.0,diff)),itter,scale);
+   float p4 = layeredValueNoise((uv -vec2(0.0,diff)),itter,scale);
+    
+  
   vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
   return normal;
 
@@ -298,7 +340,7 @@ float ior = float(${this.ior});
 
 vec3 camera = vec3(0.0,0.0,5.0);
 vec3 F0 = fresnelFactor(ior);
-vec3 N = normalize(v_normal.xyz);
+vec3 N = ${this.normal};
 float nDotV = dot(N, camera);
 vec4 finalColor = vec4(0.0);
 Light lights[10];
@@ -356,7 +398,11 @@ else
     this.sceneService.createProgram(true);
     console.log('rough', value);
   }
-
+  setNormal(value: string) {
+    this.normal = value;
+    this.sceneService.setShader(this.getFragmentShader(), 'frag');
+    this.sceneService.createProgram(true);
+  }
   setColor(value: string) {
     this.color = value;
     this.sceneService.setShader(this.getFragmentShader(), 'frag');
@@ -390,6 +436,10 @@ else
       this.setColor(value);
       return;
     }
+    if (material == 'normal') {
+      this.setNormal(value);
+      return;
+    }
   }
   setTexture(texture: TextureModel, material: string) {
     let proceduralTexture;
@@ -405,12 +455,30 @@ else
     } else {
       proceduralTexture = 'float(0.5)';
     }
+    if(material == 'normal')
+      {
+        if (texture.name == TextureType.PERLIN) {
+          proceduralTexture = `calculateNormals(v_texCoord,1,float(${texture.scale}))`;
+        } else if (texture.name == TextureType.VALUE) {
+          proceduralTexture = `calculateNormals(v_texCoord,float(${texture.scale}),int(${texture.itter}))`;
+        } else if (texture.name == TextureType.BILLOW) {
+          proceduralTexture = `calculateNormals(v_texCoord,3,float(${texture.scale}))`;
+        } else if (texture.name == TextureType.RIDGED) {
+          proceduralTexture =`calculateNormals(v_texCoord,2,float(${texture.scale}))`;
+        }
+        proceduralTexture = ` normalize(mix(v_normal.xyz, ${proceduralTexture}, 0.5))`;
+      }
+      if(material!="normal")
 
-    if (texture.lower > texture.upper) {
-      proceduralTexture = ` clamp(1.0-${proceduralTexture},${texture.upper},${texture.lower})`;
-    } else {
-      proceduralTexture = ` clamp(${proceduralTexture},${texture.lower},${texture.upper})`;
-    }
+{
+  if (texture.lower > texture.upper) {
+    proceduralTexture = ` clamp(1.0-${proceduralTexture},${texture.upper},${texture.lower})`;
+  } else {
+    proceduralTexture = ` clamp(${proceduralTexture},${texture.lower},${texture.upper})`;
+  }
+
+  
+}   
     if (material == 'color') {
       proceduralTexture = `vec3(${proceduralTexture})`;
       const color1 = this.hexToRgb2(texture.color1);
