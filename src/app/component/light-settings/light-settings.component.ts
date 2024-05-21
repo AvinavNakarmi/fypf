@@ -103,32 +103,32 @@ export class LightSettingsComponent implements OnInit {
   ];
   currentMaterialProperties: any;
 
-  setTextureUpper(event:Event)
+  setTextureUpper(event:Event ,id :number)
   {
-    this.currentMaterialProperties.TextureProperties[0].upper =parseFloat((event.target as HTMLInputElement).value);
-    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name);
+    this.currentMaterialProperties.TextureProperties[id].upper =parseFloat((event.target as HTMLInputElement).value);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
     this.setGlobalMaterial();
 
   }
-  setTextureLower(event:Event)
+  setTextureLower(event:Event,id :number)
   {
-    this.currentMaterialProperties.TextureProperties[0].lower =parseFloat((event.target as HTMLInputElement).value);
-    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.currentMaterialProperties.TextureProperties[id].lower =parseFloat((event.target as HTMLInputElement).value);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name)
     this.setGlobalMaterial();
 
   }
   
-  setItteration(event:Event)
+  setItteration(event:Event ,id :number)
   {
-    this.currentMaterialProperties.TextureProperties[0].itter =parseFloat((event.target as HTMLInputElement).value);
-    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.currentMaterialProperties.TextureProperties[id].itter =parseFloat((event.target as HTMLInputElement).value);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name)
     this.setGlobalMaterial();
 
   }
-  setTextureScale(event:Event)
+  setTextureScale(event:Event ,id :number)
   {
-    this.currentMaterialProperties.TextureProperties[0].scale =parseFloat((event.target as HTMLInputElement).value);
-    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.currentMaterialProperties.TextureProperties[id].scale =parseFloat((event.target as HTMLInputElement).value);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name)
     this.setGlobalMaterial();
 
   }
@@ -138,39 +138,39 @@ export class LightSettingsComponent implements OnInit {
     this.materialService.setMaterialProperties(this.currentMaterialProperties.name,this.currentMaterialProperties);
 
   }
-  changeProceduralTextureType(event: Event) {
+  changeProceduralTextureType(event: Event,id :number) {
     this.currentMaterialProperties.TextureProperties.name = (
       event.target as HTMLInputElement
     ).value as TextureType;
     if (
-      this.currentMaterialProperties.TextureProperties[0].name ==
+      this.currentMaterialProperties.TextureProperties[id].name ==
       TextureType.VALUE
     ) {
-      this.currentMaterialProperties.TextureProperties[0].itter = 1.0;
+      this.currentMaterialProperties.TextureProperties[id].itter = 1.0;
     } else {
-      this.currentMaterialProperties.TextureProperties[0].itter = null;
+      this.currentMaterialProperties.TextureProperties[id].itter = null;
     }
    
-    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
     this.setGlobalMaterial();
         
   }
-  changeTextureColor(event:Event, index:number)
+  changeTextureColor(event:Event, index:number,id:number)
   {
     if(index==1)
       {
-        this.currentMaterialProperties.TextureProperties[0].color1 =(event.target as HTMLInputElement).value;
+        this.currentMaterialProperties.TextureProperties[id].color1 =(event.target as HTMLInputElement).value;
         const color = this.hexToRgb2(this .currentMaterialProperties.value);
-        this.textureService.setTexture( this.currentMaterialProperties.TextureProperties[0],
+        this.textureService.setTexture( this.currentMaterialProperties.TextureProperties,
           this.currentMaterialProperties.name
         );
       
       }
   else
   {
-    this.currentMaterialProperties.TextureProperties[0].color2 =(event.target as HTMLInputElement).value;
+    this.currentMaterialProperties.TextureProperties[id].color2 =(event.target as HTMLInputElement).value;
     const color = this.hexToRgb2(this .currentMaterialProperties.value);
-    this.textureService.setTexture( this.currentMaterialProperties.TextureProperties[0],
+    this.textureService.setTexture( this.currentMaterialProperties.TextureProperties,
       this.currentMaterialProperties.name
     );
   
@@ -246,7 +246,7 @@ export class LightSettingsComponent implements OnInit {
   addProceduralTexture() {
     this.currentMaterialProperties.isTexture = true;
    
-        this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name);
+        this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
         this.setGlobalMaterial();
    
   }
@@ -385,5 +385,38 @@ export class LightSettingsComponent implements OnInit {
       };
     };
     reader.readAsDataURL(file);
+  }
+  addTexture()
+  {
+    let textureProperty:any = { 
+      name: TextureType.PERLIN,
+      scale: 10.0,
+      upper:.9,
+      lower:0.1,
+      itter: null,
+    };
+   if( this.currentMaterialProperties.name=="color")
+    {
+textureProperty =  {
+  name: TextureType.PERLIN,
+  scale: 1,
+  upper:.9,
+  lower:0.1,
+  color1:"#ffffff",
+  color2:"#000000",
+  itter: null,
+}
+    }
+
+    this.currentMaterialProperties.TextureProperties.push(textureProperty);
+    this.setGlobalMaterial();
+  }
+  removeTexture(id:number)
+  {
+    this.currentMaterialProperties.TextureProperties.splice(id,1);
+    this .setGlobalMaterial();
+
+
+
   }
 }

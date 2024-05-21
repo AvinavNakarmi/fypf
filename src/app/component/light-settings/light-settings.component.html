@@ -27,7 +27,11 @@
   {{ currentMaterialProperties.name }}
   <div *ngIf="!currentMaterialProperties.isTexture">
     <label for=""> {{ currentMaterialProperties.name }}</label>
-    <input *ngIf ="currentMaterialProperties.name!='color'&&currentMaterialProperties.name!='normal'"
+    <input
+      *ngIf="
+        currentMaterialProperties.name != 'color' &&
+        currentMaterialProperties.name != 'normal'
+      "
       type="number"
       name=""
       min="0.01"
@@ -37,13 +41,14 @@
       (change)="changeValue($event)"
       id=""
     />
-    <input *ngIf ="currentMaterialProperties.name=='color'"
-    type="color"
-    [value]="currentMaterialProperties.value"
-    (change)="changeValue($event)"
-    id=""
-  />
-    <div *ngIf="currentMaterialProperties.name!='IOR'">
+    <input
+      *ngIf="currentMaterialProperties.name == 'color'"
+      type="color"
+      [value]="currentMaterialProperties.value"
+      (change)="changeValue($event)"
+      id=""
+    />
+    <div *ngIf="currentMaterialProperties.name != 'IOR'">
       <span (click)="addProceduralTexture()"> Add Procedural Texture</span>
       <span (click)="addImageTexture()"> Add Image Texture</span>
     </div>
@@ -54,76 +59,107 @@
       !currentMaterialProperties.isImageTexture
     "
   >
-    <div>
-      <label for="">texture Type</label>
-      <select
-        [(ngModel)]="currentMaterialProperties.TextureProperties[0].name"
-        (change)="changeProceduralTextureType($event)"
+    <div style="height: 40vh; overflow-y: scroll">
+      <div
+        *ngFor="
+          let texture of currentMaterialProperties.TextureProperties;
+          let i = index
+        "
       >
-        <option *ngFor="let type of TexturePreset" [value]="type">
-          {{ type }}
-        </option>
-      </select>
-    </div>
-    <div>
-      <label for="">scale</label>
-      <input
-        type="number"
-        name=""
-        id=""
-        [value]="currentMaterialProperties.TextureProperties[0].scale"
-        (change)="setTextureScale($event)"
-      />
-    </div>
-    <div>
-      <label for=""> upper</label>
-      <input
-        type="number"
-        [value]="currentMaterialProperties.TextureProperties[0].upper"
-        (change)="setTextureUpper($event)"
-        min="0"
-        max="0.9"
-        step="0.1"
-      />
-    </div>
-    <div>
-      <label for="">lower</label>
-      <input
-        type="number"
-        [value]="currentMaterialProperties.TextureProperties[0].lower"
-        (change)="setTextureLower($event)"
-        min="0"
-        max="0.9"
-        step="0.1"
-      />
-    </div>
-    <div *ngIf="currentMaterialProperties.name=='color'">
-<label for=""> color 1 </label>
-<input type="color" (change)="changeTextureColor($event,1)" [value]="currentMaterialProperties.TextureProperties[0].color1" name="" id="">
-<label for="">color 2 </label>
-<input type="color" (change)="changeTextureColor($event,2)" [value]="currentMaterialProperties.TextureProperties[0].color2" name="" id="">
+        <div>
+          <label for="">texture Type</label>
+          <select
+            [(ngModel)]="texture.name"
+            (change)="changeProceduralTextureType($event, i)"
+          >
+            <option *ngFor="let type of TexturePreset" [value]="type">
+              {{ type }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label for="">scale</label>
+          <input
+            type="number"
+            name=""
+            id=""
+            [value]="texture.scale"
+            (change)="setTextureScale($event, i)"
+          />
+        </div>
+        <div>
+          <label for=""> upper</label>
+          <input
+            type="number"
+            [value]="texture.upper"
+            (change)="setTextureUpper($event, i)"
+            min="0"
+            max="0.9"
+            step="0.1"
+          />
+        </div>
+        <div>
+          <label for="">lower</label>
+          <input
+            type="number"
+            [value]="texture.lower"
+            (change)="setTextureLower($event, i)"
+            min="0"
+            max="0.9"
+            step="0.1"
+          />
+        </div>
+        <div *ngIf="currentMaterialProperties.name == 'color'">
+          <label for=""> color 1 </label>
+          <input
+            type="color"
+            (change)="changeTextureColor($event, 1, i)"
+            [value]="texture.color1"
+            name=""
+            id=""
+          />
+          <label for="">color 2 </label>
+          <input
+            type="color"
+            (change)="changeTextureColor($event, 2, i)"
+            [value]="texture.color2"
+            name=""
+            id=""
+          />
+        </div>
 
-</div>
-
-    <div *ngIf="currentMaterialProperties.TextureProperties[0].itter">
-      <label for="">itteration</label>
-      <input
-        type="number"
-        name=""
-        id=""
-        (change)="setItteration($event)"
-        [value]="currentMaterialProperties.TextureProperties[0].itter"
-      />
+        <div *ngIf="currentMaterialProperties.TextureProperties[i].itter">
+          <label for="">itteration</label>
+          <input
+            type="number"
+            name=""
+            id=""
+            (change)="setItteration($event, i)"
+            [value]="currentMaterialProperties.TextureProperties[i].itter"
+          />
+        </div>
+        <button
+          (click)="removeTexture(i)"
+          *ngIf="currentMaterialProperties.TextureProperties.length > 1"
+        >
+          remove texture
+        </button>
+      </div>
+      <button (click)="addTexture()">add texture</button>
     </div>
-    <button (click)="closeImageComponent()">close</button>
   </div>
+
   <div
     *ngIf="
       currentMaterialProperties.isTexture &&
       currentMaterialProperties.isImageTexture
     "
   >
-    <input type="file" (change)="setImageTexture($event)" [value]="currentMaterialProperties.imgSrc"/>
+    <input
+      type="file"
+      (change)="setImageTexture($event)"
+      [value]="currentMaterialProperties.imgSrc"
+    />
     <label for="">factor</label>
     <input type="number" />
     <button (click)="closeImageComponent()">close</button>

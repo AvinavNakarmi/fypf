@@ -669,7 +669,7 @@ void main() {
 
       materials.forEach((material) => {
         let rendervalue = '';
-        console.log(material.value);
+        let proceduralTextureList: any = [];
 
         if (material.name != 'IOR') {
           if (!material.isTexture) {
@@ -685,57 +685,77 @@ void main() {
               rendervalue = `float(${material.value})`;
             }
           } else {
-            if (material.name == 'normal') {
-              if (material.TextureProperties[0].name == TextureType.PERLIN) {
-                rendervalue = `calculateNormals(v_texCoord, 1,float(${material.TextureProperties[0].scale}),float(${material.TextureProperties[0].upper}),float(${material.TextureProperties[0].lower}))`;
-              } else if (
-                material.TextureProperties[0].name == TextureType.VALUE
-              ) {
-                rendervalue = `calculateNormals(v_texCoord,float(${material.TextureProperties[0].scale}),int(${material.TextureProperties[0].itter}),float(${material.TextureProperties[0].upper}),float(${material.TextureProperties[0].lower}))`;
-              } else if (
-                material.TextureProperties[0].name == TextureType.BILLOW
-              ) {
-                rendervalue = `calculateNormals(v_texCoord, 3,float(${material.TextureProperties[0].scale}),float(${material.TextureProperties[0].upper}),float(${material.TextureProperties[0].lower}))`;
-              } else if (
-                material.TextureProperties[0].name == TextureType.RIDGED
-              ) {
-                rendervalue = `calculateNormals(v_texCoord, 2,float(${material.TextureProperties[0].scale}),float(${material.TextureProperties[0].upper}),float(${material.TextureProperties[0].lower}))`;
-              }
-              rendervalue = ` normalize(mix(v_normal.xyz, ${rendervalue}, 0.5))`;
-            }
-            else
-            {
-              
-    if (  material.TextureProperties[0].name == TextureType.PERLIN) {
-      rendervalue = ` perlinNoise(v_texCoord,float(${  material.TextureProperties[0].scale}))`;
-    } else if (  material.TextureProperties[0].name == TextureType.VALUE) {
-      rendervalue = ` layeredValueNoise(v_texCoord,int(${  material.TextureProperties[0].itter}),float(${  material.TextureProperties[0].scale}))`;
-    } else if (  material.TextureProperties[0].name == TextureType.BILLOW) {
-      rendervalue = ` billowNoise(v_texCoord,float(${  material.TextureProperties[0].scale}))`;
-    } else if (  material.TextureProperties[0].name == TextureType.RIDGED) {
-      rendervalue = ` ridgedNoise(v_texCoord,float(${  material.TextureProperties[0].scale}))`;
-    } else {
-      rendervalue = 'float(0.5)';
-    }
-    if (material.TextureProperties[0].lower > material.TextureProperties[0].upper) {
-      rendervalue = ` clamp(1.0-${rendervalue},float(${material.TextureProperties[0].upper}),float(${material.TextureProperties[0].lower}))`;
-    } else {
-      rendervalue = ` clamp(${rendervalue},float(${material.TextureProperties[0].lower}),float(${material.TextureProperties[0].upper}))`;
-    }
-            if (material.name == 'color') {
-              rendervalue = `vec3(${rendervalue})`;
-              const color1 = this.hexToRgb(material.TextureProperties[0].color1);
-              const color2 = this.hexToRgb(material.TextureProperties[0].color2);
-              rendervalue = `mix(vec3(float(${color1[0] / 255}),float(${
-                color1[1] / 255
-              }),float(${color1[2] / 255})), vec3(float(${color2[0]/255}),float(${
-                color2[1]/255
-              }),float(${color2[2]/255})), ${rendervalue})`;
-            
-              } 
-            
+            let setup: any = [];
+            material.TextureProperties.forEach((texture: any) => 
+              {
+              let tempval;
 
-            } 
+              if (material.name == 'normal') {
+                if (texture.name == TextureType.PERLIN) {
+                  tempval = `calculateNormals(v_texCoord, 1,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
+                } else if (texture.name == TextureType.VALUE) {
+                  tempval = `calculateNormals(v_texCoord,float(${texture.scale}),int(${texture.itter}),float(${texture.upper}),float(${texture.lower}))`;
+                } else if (texture.name == TextureType.BILLOW) {
+                  tempval = `calculateNormals(v_texCoord, 3,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
+                } else if (texture.name == TextureType.RIDGED) {
+                  tempval = `calculateNormals(v_texCoord, 2,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
+                }
+                tempval = ` normalize(mix(v_normal.xyz, ${tempval}, 0.5))`;
+              } else {
+                if (texture.name == TextureType.PERLIN) {
+                  tempval = ` perlinNoise(v_texCoord,float(${texture.scale}))`;
+                } else if (texture.name == TextureType.VALUE) {
+                  tempval = ` layeredValueNoise(v_texCoord,int(${texture.itter}),float(${texture.scale}))`;
+                } else if (texture.name == TextureType.BILLOW) {
+                  tempval = ` billowNoise(v_texCoord,float(${texture.scale}))`;
+                } else if (texture.name == TextureType.RIDGED) {
+                  tempval = ` ridgedNoise(v_texCoord,float(${texture.scale}))`;
+                } else {
+                  tempval = 'float(0.5)';
+                }
+                if (texture.lower > texture.upper) {
+                  tempval = ` clamp(1.0-${tempval},float(${texture.upper}),float(${texture.lower}))`;
+                } else {
+                  tempval = ` clamp(${tempval},float(${texture.lower}),float(${texture.upper}))`;
+                }
+                if (material.name == 'color') {
+                  tempval = `vec3(${tempval})`;
+                  const color1 = this.hexToRgb(texture.color1);
+                  const color2 = this.hexToRgb(texture.color2);
+                  tempval = `mix(vec3(float(${color1[0] / 255}),float(${
+                    color1[1] / 255
+                  }),float(${color1[2] / 255})), vec3(float(${
+                    color2[0] / 255
+                  }),float(${color2[1] / 255}),float(${
+                    color2[2] / 255
+                  })), ${tempval})`;
+                }
+              }
+              setup.push(tempval);
+            });
+            
+if(setup.length==1)
+  {
+    rendervalue =  setup[0];
+  }
+  else
+  {
+    setup.forEach( (pt:any)=>
+      {
+        if(!rendervalue)
+          {
+            rendervalue =pt;  
+          }
+          else
+          {
+            rendervalue = `mix(${rendervalue},${pt},0.5)`;
+          }
+
+      }
+      
+    )
+  }
+
           }
           this.renderTexture(rendervalue, canvas, object);
           this.downloadImage(canvas, material.name);

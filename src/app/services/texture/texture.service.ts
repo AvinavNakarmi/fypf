@@ -414,8 +414,7 @@ if(image==1)
 }
 else
 {
-  // gl_FragColor = vec4(finalColor);
-  gl_FragColor = vec4(vec3(meshColor),1.0);
+   gl_FragColor = vec4(finalColor);
 
 }
 }
@@ -473,7 +472,12 @@ else
       return;
     }
   }
-  setTexture(texture: TextureModel, material: string) {
+  setTexture(textures: TextureModel[], material: string) {
+    let proceduralTextureList:any=[];
+    
+    textures.forEach(texture=>
+      {
+      
     let proceduralTexture;
 
     if (texture.name == TextureType.PERLIN) {
@@ -520,9 +524,34 @@ else
         color1[1] / 255
       }),float(${color1[2] / 255})), vec3(float(${color2[0]/255}),float(${
         color2[1]/255
-      }),float(${color2[2]/255})), ${proceduralTexture});`;
+      }),float(${color2[2]/255})), ${proceduralTexture})`;
     }
-    this.setValue(proceduralTexture, material);
+    proceduralTextureList.push(proceduralTexture);
+  }
+);
+let finalTexture:any;
+if(proceduralTextureList.length==1)
+  {
+    finalTexture =  proceduralTextureList[0];
+  }
+  else
+  {
+    proceduralTextureList.forEach( (pt:any)=>
+      {
+        if(!finalTexture)
+          {
+            finalTexture =pt;  
+          }
+          else
+          {
+            finalTexture = `mix(${finalTexture},${pt},0.5)`;
+          }
+
+      }
+      
+    )
+  }
+    this.setValue(finalTexture, material);
   }
   hexToRgb2(hex: string) {
     hex = hex.replace(/^#/, '');

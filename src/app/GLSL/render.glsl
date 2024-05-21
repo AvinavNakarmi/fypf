@@ -19,6 +19,7 @@ uniform float u_time;
 
 
 
+
 float whiteNoise(vec2 p)
 {
     float random = dot(p,vec2(12.,78.));
@@ -291,6 +292,10 @@ float lightAttenuation(Light light) {
   {
     return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);
   }
+
+
+
+
 void main() {
   Light lights[10];
   vec3 meshColor = vec3(1.0);
@@ -329,7 +334,8 @@ vec2  uv = v_texcoord;
 
   } 
 
-
-  gl_FragColor = vec4(vec3( normalize(mix(v_normal.xyz, calculateNormals(v_texCoord, 1,float(1),float(0.9),float(0.1)), 0.5))),1.0);
+float perlin =perlinNoise( uv, 10.0);
+float value = layeredValueNoise(uv,1,10.);
+  gl_FragColor =vec4( vec3(mix(perlin,value ,0.5)),1.0);
 
 }
