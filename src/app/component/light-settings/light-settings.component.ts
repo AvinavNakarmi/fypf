@@ -3,6 +3,7 @@ import { isEmpty } from 'rxjs';
 import { TextureType } from 'src/app/enum/texture-type';
 import { Light } from 'src/app/model/light.model';
 import { LightService } from 'src/app/services/light/light.service';
+import { MaterialService } from 'src/app/services/material/material.service';
 import { SceneService } from 'src/app/services/scene/scene.service';
 import { TextureService } from 'src/app/services/texture/texture.service';
 
@@ -65,6 +66,8 @@ export class LightSettingsComponent implements OnInit {
       isTexture: false,
       isImageTexture: false,
       ImageTexture: null,
+      ImgSrc: "",
+
 
       isSetImageTexture: false,
       TextureProperties: [
@@ -103,13 +106,15 @@ export class LightSettingsComponent implements OnInit {
   setTextureUpper(event:Event)
   {
     this.currentMaterialProperties.TextureProperties[0].upper =parseFloat((event.target as HTMLInputElement).value);
-    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name);
+    this.setGlobalMaterial();
 
   }
   setTextureLower(event:Event)
   {
     this.currentMaterialProperties.TextureProperties[0].lower =parseFloat((event.target as HTMLInputElement).value);
     this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.setGlobalMaterial();
 
   }
   
@@ -117,12 +122,20 @@ export class LightSettingsComponent implements OnInit {
   {
     this.currentMaterialProperties.TextureProperties[0].itter =parseFloat((event.target as HTMLInputElement).value);
     this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.setGlobalMaterial();
 
   }
   setTextureScale(event:Event)
   {
     this.currentMaterialProperties.TextureProperties[0].scale =parseFloat((event.target as HTMLInputElement).value);
     this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name)
+    this.setGlobalMaterial();
+
+  }
+  setGlobalMaterial()
+  {
+    console.log(this .currentMaterialProperties);
+    this.materialService.setMaterialProperties(this.currentMaterialProperties.name,this.currentMaterialProperties);
 
   }
   changeProceduralTextureType(event: Event) {
@@ -139,6 +152,7 @@ export class LightSettingsComponent implements OnInit {
     }
    
     this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name);
+    this.setGlobalMaterial();
         
   }
   changeTextureColor(event:Event, index:number)
@@ -161,6 +175,8 @@ export class LightSettingsComponent implements OnInit {
     );
   
   }
+  this.setGlobalMaterial();
+
     }
   changeValue(event: Event) {
 
@@ -173,6 +189,8 @@ export class LightSettingsComponent implements OnInit {
           `vec3(float(${color[0]/255}),float(${color[1]/255}),float(${color[2]/255}))`,
           this.currentMaterialProperties.name
         );
+    this.setGlobalMaterial();
+
         return;
     } 
     this.currentMaterialProperties.value =(event.target as HTMLInputElement).value;
@@ -180,11 +198,14 @@ export class LightSettingsComponent implements OnInit {
       `float(${this.currentMaterialProperties.value})`,
       this.currentMaterialProperties.name
     );
+    this.setGlobalMaterial();
+
   }
   selectedLight: Light | undefined;
   constructor(
     private lightService: LightService,
     private textureService: TextureService,
+    private materialService:MaterialService,
     private sceneService: SceneService
   ) {
     this.lightService.getLights().subscribe((data) => (this.lights = data));
@@ -226,17 +247,22 @@ export class LightSettingsComponent implements OnInit {
     this.currentMaterialProperties.isTexture = true;
    
         this.textureService.setTexture(this.currentMaterialProperties.TextureProperties[0],this.currentMaterialProperties.name);
+        this.setGlobalMaterial();
    
   }
 
   closeImageComponent() {
     this.currentMaterialProperties.isTexture = false;
     this.currentMaterialProperties.isImageTexture = false;
+    this.setGlobalMaterial();
+
   }
 
   addImageTexture() {
     this.currentMaterialProperties.isTexture = true;
     this.currentMaterialProperties.isImageTexture = true;
+    this.setGlobalMaterial();
+
   }
 
   RGBTohex(rgb: number[]) {
@@ -294,6 +320,8 @@ export class LightSettingsComponent implements OnInit {
             ` clamp(RGBtoBW(texture2D(u_metalImageTexture, v_texCoord)),0.01,0.90)`,
             this.currentMaterialProperties.name
           );
+    this.setGlobalMaterial();
+
           return;
         }
         if (this.currentMaterialProperties.name == 'roughness') {
@@ -301,15 +329,19 @@ export class LightSettingsComponent implements OnInit {
             ` clamp(RGBtoBW(texture2D(u_roughnessImageTexture, v_texCoord)),0.01,0.90)`,
             this.currentMaterialProperties.name
           );
+          this.setGlobalMaterial();
+
           return;
         }
 
        
         if (this.currentMaterialProperties.name == 'color') {
           this.textureService.setValue(
-            ` clamp(RGBtoBW(texture2D(u_colorImageTexture, v_texCoord)),0.01,0.90)`,
+            ` texture2D(u_colorImageTexture, v_texCoord).xyz`,
             this.currentMaterialProperties.name
           );
+    this.setGlobalMaterial();
+
           return;
         }
         if (this.currentMaterialProperties.name == 'normal') {
@@ -317,6 +349,8 @@ export class LightSettingsComponent implements OnInit {
             ` clamp(RGBtoBW(texture2D(u_normalImageTexture, v_texCoord)),0.01,0.90)`,
             this.currentMaterialProperties.name
           );
+    this.setGlobalMaterial();
+
           return;
         }
       }
@@ -341,8 +375,11 @@ export class LightSettingsComponent implements OnInit {
       this.currentMaterialProperties.ImageTexture.src = imageUrl;
       this.currentMaterialProperties.ImgSrc = imageUrl; // Set the src attribute of the Image object to the data URL
        // Set the src attribute of the Image object to the data URL
-      // Optionally, you can add an onload event handler to execute code when the image is loaded
+      
+       // Optionally, you can add an onload event handler to execute code when the image is loaded
       this.currentMaterialProperties.ImageTexture.onload = () => {
+        this.setGlobalMaterial();
+        
         this.sceneService.renderImageTexture(this.currentMaterialProperties.ImageTexture
           , type);
       };

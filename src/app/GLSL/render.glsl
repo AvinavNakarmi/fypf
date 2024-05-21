@@ -151,7 +151,7 @@ float ridgedNoise(vec2 uv ,float scale)
 
 
 }
-vec3 calculateNormals(vec2 uv, int textureIndex,float scale)
+vec3 calculateNormals(vec2 uv, int textureIndex,float scale,float upper ,float lower)
 {
   float diff= 0.0001;
   float height = .0001;
@@ -184,6 +184,22 @@ vec3 calculateNormals(vec2 uv, int textureIndex,float scale)
     
   }
   
+  if(upper<lower)
+{
+  p1= clamp(1.0-p1, upper,lower);
+  p2= clamp(1.0-p2, upper,lower);  
+  p3= clamp(1.0-p3, upper,lower);  
+  p4= clamp(1.0-p4, upper,lower);  
+}  
+else
+{
+ 
+  p1= clamp(p1, lower,upper);
+  p2= clamp(p2, lower,upper);  
+  p3= clamp(p3, lower,upper);  
+  p4= clamp(p4, lower,upper);  
+
+}
   vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
   return normal;
 
@@ -290,7 +306,8 @@ void main() {
 vec2  uv = v_texcoord;
 
   // Calculate procedural normals
-  vec3 proceduralNormals = calculateNormals(v_texcoord,20.,1);
+  vec3 proceduralNormals = calculateNormals(v_texcoord, 1,20.0,1.0,-1.0);
+
   
   // // Mix procedural normals with surface normals
   vec3 N = normalize(mix(v_normal.xyz, proceduralNormals, 0.5)); // Adjust the blend factor (0.5) as needed
@@ -313,6 +330,6 @@ vec2  uv = v_texcoord;
   } 
 
 
-  gl_FragColor = vec4( vec3(finalColor),1.0);
+  gl_FragColor = vec4(vec3( normalize(mix(v_normal.xyz, calculateNormals(v_texCoord, 1,float(1),float(0.9),float(0.1)), 0.5))),1.0);
 
 }

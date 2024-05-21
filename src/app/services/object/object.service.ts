@@ -12,16 +12,12 @@ export class ObjectService {
   constructor(private http: HttpClient) {}
   getPlane()
   {
-    const vertexData: number[] = [
-      // Front
-      1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0,
-      1.0, -1.0, -1.0, 1.0,
-
-      // Left
-      -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0,
-      -1.0, 1.0, -1.0, -1.0, -1.0,
-    ]
-    return new Float32Array(vertexData);
+    return this.getObjData('../../assets/plane.obj').pipe(
+      map((res) => {
+        const objectData = this.parseOBJ(res);
+        return objectData;
+      })
+    );
   }
   getCubeVertexData() {
     const vertexData: number[] = [

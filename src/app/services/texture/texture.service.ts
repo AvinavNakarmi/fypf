@@ -215,7 +215,7 @@ float ridgedNoise(vec2 uv ,float scale)
 
 }
 
-vec3 calculateNormals(vec2 uv, int textureIndex,float scale)
+vec3 calculateNormals(vec2 uv, int textureIndex,float scale ,float upper ,float lower)
 {
   float diff= 0.0001;
   float height = .0001;
@@ -247,12 +247,28 @@ vec3 calculateNormals(vec2 uv, int textureIndex,float scale)
    p4 = ridgedNoise((uv -vec2(0.0,diff)),scale);
     
   }
+  if(upper<lower)
+    {
+      p1= clamp(1.0-p1, upper,lower);
+      p2= clamp(1.0-p2, upper,lower);  
+      p3= clamp(1.0-p3, upper,lower);  
+      p4= clamp(1.0-p4, upper,lower);  
+    }  
+    else
+    {
+     
+      p1= clamp(p1, lower,upper);
+      p2= clamp(p2, lower,upper);  
+      p3= clamp(p3, lower,upper);  
+      p4= clamp(p4, lower,upper);  
+    
+    }
   
   vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
   return normal;
 
 }
-vec3 calculateNormals(vec2 uv,float scale,int  itter)
+vec3 calculateNormals(vec2 uv,float scale,int  itter,float upper ,float lower)
 {
   float diff= 0.0001;
   float height = .0001;
@@ -261,7 +277,22 @@ vec3 calculateNormals(vec2 uv,float scale,int  itter)
    float p3 = layeredValueNoise((uv +vec2(0.0,diff)),itter,scale);
    float p4 = layeredValueNoise((uv -vec2(0.0,diff)),itter,scale);
     
-  
+   if(upper<lower)
+    {
+      p1= clamp(1.0-p1, upper,lower);
+      p2= clamp(1.0-p2, upper,lower);  
+      p3= clamp(1.0-p3, upper,lower);  
+      p4= clamp(1.0-p4, upper,lower);  
+    }  
+    else
+    {
+     
+      p1= clamp(p1, lower,upper);
+      p2= clamp(p2, lower,upper);  
+      p3= clamp(p3, lower,upper);  
+      p4= clamp(p4, lower,upper);  
+    
+    }
   vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
   return normal;
 
@@ -383,7 +414,8 @@ if(image==1)
 }
 else
 {
-  gl_FragColor = vec4(finalColor);
+  // gl_FragColor = vec4(finalColor);
+  gl_FragColor = vec4(vec3(meshColor),1.0);
 
 }
 }
@@ -458,23 +490,24 @@ else
     if(material == 'normal')
       {
         if (texture.name == TextureType.PERLIN) {
-          proceduralTexture = `calculateNormals(v_texCoord,1,float(${texture.scale}))`;
+          proceduralTexture = ` calculateNormals(v_texCoord, 1,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
         } else if (texture.name == TextureType.VALUE) {
-          proceduralTexture = `calculateNormals(v_texCoord,float(${texture.scale}),int(${texture.itter}))`;
+          proceduralTexture = `calculateNormals(v_texCoord,float(${texture.scale}),int(${texture.itter}),float(${texture.upper}),float(${texture.lower}))`;
         } else if (texture.name == TextureType.BILLOW) {
-          proceduralTexture = `calculateNormals(v_texCoord,3,float(${texture.scale}))`;
+          proceduralTexture = `calculateNormals(v_texCoord, 3,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
         } else if (texture.name == TextureType.RIDGED) {
-          proceduralTexture =`calculateNormals(v_texCoord,2,float(${texture.scale}))`;
+          proceduralTexture =`calculateNormals(v_texCoord, 2,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
         }
         proceduralTexture = ` normalize(mix(v_normal.xyz, ${proceduralTexture}, 0.5))`;
+
       }
       if(material!="normal")
 
 {
   if (texture.lower > texture.upper) {
-    proceduralTexture = ` clamp(1.0-${proceduralTexture},${texture.upper},${texture.lower})`;
+    proceduralTexture = ` clamp(1.0-${proceduralTexture},float(${texture.upper}),float(${texture.lower}))`;
   } else {
-    proceduralTexture = ` clamp(${proceduralTexture},${texture.lower},${texture.upper})`;
+    proceduralTexture = ` clamp(${proceduralTexture},float(${texture.lower}),float(${texture.upper}))`;
   }
 
   
