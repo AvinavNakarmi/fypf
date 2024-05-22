@@ -1,5 +1,9 @@
 .light-preview
 {
+    .light-preview-title
+    {
+font-size: 10px;
+    }
     .light
 {
     display:flex;
@@ -37,4 +41,15 @@ justify-content: space-around;
 select
 {
     background-color: black;
+}
+.material-container
+{
+    height: 39vh;
+     overflow-y: scroll;
+}
+.material
+{
+    margin:20px ;
+
+
 }

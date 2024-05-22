@@ -8,6 +8,6 @@ export interface TextureModel {
     lower :number;
     color1:string;
     color2:string;
-
+random: number;
 
 }

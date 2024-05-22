@@ -17,9 +17,6 @@ uniform float u_time;
 
 #define PI 3.14
 
-
-
-
 float whiteNoise(vec2 p)
 {
     float random = dot(p,vec2(12.,78.));
@@ -257,6 +254,54 @@ float schlickGGX(float nDotV, float roughness) {
 
 }
 
+vec2 noise2x2(vec2 p) {
+  float x = dot(p, vec2(123.4, 234.5));
+  float y = dot(p, vec2(345.6, 456.7));
+  vec2 noise = vec2(x, y);
+  noise = sin(noise);
+  noise = noise * 43758.5453;
+  noise = fract(noise);
+  return noise;
+}
+vec3 voronoiNoise(vec2 uv,float scale,float seed)
+{
+  
+  vec3 color = vec3(0.0);
+  uv = uv* scale;
+  vec2  currentGridCoord = fract(uv);
+  vec2  currentGridID = floor(uv);
+
+   color = vec3(currentGridCoord, 0.0);
+  float minDistFromPixel = 1.0;
+  
+  for (float i = -1.0; i <= 1.0; i++) {
+    for (float j = -1.0; j <= 1.0; j++) {
+      vec2 adjGridCoords = vec2(i, j);
+      vec2 pointOnAdjGrid = adjGridCoords;
+vec2 noise = noise2x2(currentGridID + adjGridCoords);
+ pointOnAdjGrid = adjGridCoords + sin(seed* noise) * 0.5;
+
+      float dist = length(currentGridCoord - pointOnAdjGrid);
+      minDistFromPixel = min(dist, minDistFromPixel);
+
+    }
+
+  }
+
+
+  // part 3.2 - display voronoi noise
+  color = vec3(minDistFromPixel);
+
+  // part 3.3 - display clouds
+
+  // part 3.4 - display clouds with dots
+
+  return color;
+  
+}
+
+
+
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
   return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
@@ -336,6 +381,6 @@ vec2  uv = v_texcoord;
 
 float perlin =perlinNoise( uv, 10.0);
 float value = layeredValueNoise(uv,1,10.);
-  gl_FragColor =vec4( vec3(mix(perlin,value ,0.5)),1.0);
+  gl_FragColor =vec4( vec3(voronoiNoise(uv,20.0,.0)),1.0);
 
 }

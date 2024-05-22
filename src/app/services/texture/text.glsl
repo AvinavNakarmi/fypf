@@ -1,56 +1,4 @@
-import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
-import { SceneService } from '../scene/scene.service';
-import { TextureType } from 'src/app/enum/texture-type';
-import { TextureModel } from 'src/app/model/texture.model';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class TextureService {
-  metalicness: Subject<number> = new Subject();
-  roughness: Subject<number> = new Subject();
-  IOR: Subject<number> = new Subject();
-
-  metal: string = 'float(0.5)';
-  rough: string = 'float(0.1)';
-  color: string = 'vec3(1.0)';
-  normal: string = 'normalize(v_normal.xyz)';
-
-
-  ior: number = 1.319;
-
-  constructor(private sceneService: SceneService) {}
-  getVertexShader() {
-    const vertexShader = `
-  attribute vec2 a_texCoord;
-  
-  attribute vec3 normal;
-  
-precision highp float;
-uniform mat4 modelMatrix; 
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 Matrix;
-varying vec4 v_normal;
-varying vec4 v_position;
-
-varying vec2 v_texCoord;
-
-
-
-attribute vec3 position;
-void main() {
-  v_normal =projectionMatrix*viewMatrix*modelMatrix*vec4(normalize(normal), 1.0);
-  v_position=projectionMatrix*viewMatrix*modelMatrix*vec4(position, 1.0);
-  v_texCoord = a_texCoord;
-
-    gl_Position = projectionMatrix*viewMatrix*modelMatrix* vec4(position, 1.0);    }
-`;
-    return vertexShader;
-  }
-  getFragmentShader() {
-    const fragmentShader = `
   #define PI 3.14
   #define POINT_LIGHT 0
   #define DIRECT_LIGHT 1
@@ -283,6 +231,37 @@ vec2 noise2x2(vec2 p) {
   noise = fract(noise);
   return  noise;
 }
+
+
+vec3 calculateNormals(vec2 uv,float scale,int  itter,float upper ,float lower)
+{
+  float diff= 0.0001;
+  float height = .0001;
+   float p1 = layeredValueNoise((uv +vec2(diff,0.0)),itter,scale);
+   float p2 = layeredValueNoise((uv -vec2(diff,0.0)),itter,scale);
+   float p3 = layeredValueNoise((uv +vec2(0.0,diff)),itter,scale);
+   float p4 = layeredValueNoise((uv -vec2(0.0,diff)),itter,scale);
+    
+   if(upper<lower)
+    {
+      p1= clamp(1.0-p1, upper,lower);
+      p2= clamp(1.0-p2, upper,lower);  
+      p3= clamp(1.0-p3, upper,lower);  
+      p4= clamp(1.0-p4, upper,lower);  
+    }  
+    else
+    {
+     
+      p1= clamp(p1, lower,upper);
+      p2= clamp(p2, lower,upper);  
+      p3= clamp(p3, lower,upper);  
+      p4= clamp(p4, lower,upper);  
+    
+    }
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
 float voronoiNoise(vec2 uv,float scale,float seed)
 {
   
@@ -316,40 +295,12 @@ vec2 noise = noise2x2(currentGridID + adjGridCoords);
 
   // part 3.4 - display clouds with dots
 
-  return  RGBtoBW(vec4(vec3(color),1.0));
+
+  return RGBtoBW(vec4(vec3(color),1.0));
   
 }
-vec3 calculateNormals(vec2 uv,float scale,int  itter,float upper ,float lower)
-{
-  float diff= 0.0001;
-  float height = .0001;
-   float p1 = layeredValueNoise((uv +vec2(diff,0.0)),itter,scale);
-   float p2 = layeredValueNoise((uv -vec2(diff,0.0)),itter,scale);
-   float p3 = layeredValueNoise((uv +vec2(0.0,diff)),itter,scale);
-   float p4 = layeredValueNoise((uv -vec2(0.0,diff)),itter,scale);
-    
-   if(upper<lower)
-    {
-      p1= clamp(1.0-p1, upper,lower);
-      p2= clamp(1.0-p2, upper,lower);  
-      p3= clamp(1.0-p3, upper,lower);  
-      p4= clamp(1.0-p4, upper,lower);  
-    }  
-    else
-    {
-     
-      p1= clamp(p1, lower,upper);
-      p2= clamp(p2, lower,upper);  
-      p3= clamp(p3, lower,upper);  
-      p4= clamp(p4, lower,upper);  
-    
-    }
-  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
-  return normal;
 
-}
-
-vec3 calculateNormals(vec2 uv,float scale,float upper ,float lower,float  random)
+vec3 calculateNormals(vec2 uv,float scale,float upper ,float lower,int  random)
 {
   float diff= 0.0001;
   float height = .0001;
@@ -436,17 +387,17 @@ vec3 calculateNormals2(vec2 uv,float p1,float p2,float p3,float p4)
     return 0.0;
 
   }
- 
+  
 
 void main() {
-vec3 meshColor = ${this.color};
-float metalicness = ${this.metal};
-float roughness = ${this.rough};
-float ior = float(${this.ior});
+vec3 meshColor = vec3(1.0);
+float metalicness = 1.0;
+float roughness = 1.0;
+float ior = 1.;
 
 vec3 camera = vec3(0.0,0.0,5.0);
 vec3 F0 = fresnelFactor(ior);
-vec3 N = ${this.normal};
+vec3 N = vec3(1.);
 float nDotV = dot(N, camera);
 vec4 finalColor = vec4(0.0);
 Light lights[10];
@@ -457,6 +408,7 @@ for(int i = 0; i <  MAX_LIGHTS; i++) {
   if (i == u_numLights) {
     break; 
 }
+
  
   if( lightType[i]==0)
   {
@@ -492,156 +444,4 @@ else
    gl_FragColor = vec4(finalColor);
 
 }
-}
-
-  `;
-    return fragmentShader;
-  }
-
-  setRoughness(value: string) {
-    this.rough = value;
-    this.sceneService.setShader(this.getFragmentShader(), 'frag');
-    this.sceneService.createProgram(true);
-    console.log('rough', value);
-  }
-  setNormal(value: string) {
-    this.normal = value;
-    this.sceneService.setShader(this.getFragmentShader(), 'frag');
-    this.sceneService.createProgram(true);
-  }
-  setColor(value: string) {
-    this.color = value;
-    this.sceneService.setShader(this.getFragmentShader(), 'frag');
-    this.sceneService.createProgram(true);
-  }
-  setMetalicness(value: string) {
-    this.metal = value;
-    this.sceneService.setShader(this.getFragmentShader(), 'frag');
-    this.sceneService.createProgram(true);
-    console.log('metal', value);
-  }
-
-  setIOR(value: number) {
-    this.ior = value;
-    this.sceneService.setShader(this.getFragmentShader(), 'frag');
-    this.sceneService.createProgram(true);
-
-    console.log('ior', value);
-  }
-
-  setValue(value: string, material: string) {
-    if (material == 'metallic') {
-      this.setMetalicness(value);
-      return;
-    }
-    if (material == 'roughness') {
-      this.setRoughness(value);
-      return;
-    }
-    if (material == 'color') {
-      this.setColor(value);
-      return;
-    }
-    if (material == 'normal') {
-      this.setNormal(value);
-      return;
-    }
-  }
-  setTexture(textures: TextureModel[], material: string) {
-    let proceduralTextureList:any=[];
-    
-    textures.forEach(texture=>
-      {
-      
-    let proceduralTexture;
-
-    if (texture.name == TextureType.PERLIN) {
-      proceduralTexture = ` perlinNoise(v_texCoord,float(${texture.scale}))`;
-    } else if (texture.name == TextureType.VALUE) {
-      proceduralTexture = ` layeredValueNoise(v_texCoord,int(${texture.itter}),float(${texture.scale}))`;
-    } else if (texture.name == TextureType.BILLOW) {
-      proceduralTexture = ` billowNoise(v_texCoord,float(${texture.scale}))`;
-    } else if (texture.name == TextureType.RIDGED) {
-      proceduralTexture = ` ridgedNoise(v_texCoord,float(${texture.scale}))`;
-    }
-    else if(texture.name == TextureType.VORONOI)
-    {
-      proceduralTexture = `voronoiNoise(v_texCoord,float(${texture.scale}),float(${texture.random})) `;
-    } 
-    else {
-      proceduralTexture = 'float(0.5)';
-    }
-    if(material == 'normal')
-      {
-        if (texture.name == TextureType.PERLIN) {
-          proceduralTexture = ` calculateNormals(v_texCoord, 1,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
-        } else if (texture.name == TextureType.VALUE) {
-          proceduralTexture = `calculateNormals(v_texCoord,float(${texture.scale}),int(${texture.itter}),float(${texture.upper}),float(${texture.lower}))`;
-        } else if (texture.name == TextureType.BILLOW) {
-          proceduralTexture = `calculateNormals(v_texCoord, 3,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
-        } else if (texture.name == TextureType.RIDGED) {
-          proceduralTexture =`calculateNormals(v_texCoord, 2,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
-        }
-        else if (texture.name == TextureType.VORONOI) {
-          proceduralTexture = `calculateNormals(v_texCoord,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}),float(${texture.random}))`;
-        }
-        proceduralTexture = ` normalize(mix(v_normal.xyz, ${proceduralTexture}, 0.5))`;
-
-      }
-      if(material!="normal")
-
-{
-  if (texture.lower > texture.upper) {
-    proceduralTexture = ` clamp(1.0-${proceduralTexture},float(${texture.upper}),float(${texture.lower}))`;
-  } else {
-    proceduralTexture = ` clamp(${proceduralTexture},float(${texture.lower}),float(${texture.upper}))`;
-  }
-
-  
-}   
-    if (material == 'color') {
-      proceduralTexture = `vec3(${proceduralTexture})`;
-      const color1 = this.hexToRgb2(texture.color1);
-      const color2 = this.hexToRgb2(texture.color2);
-      proceduralTexture = `mix(vec3(float(${color1[0] / 255}),float(${
-        color1[1] / 255
-      }),float(${color1[2] / 255})), vec3(float(${color2[0]/255}),float(${
-        color2[1]/255
-      }),float(${color2[2]/255})), ${proceduralTexture})`;
-    }
-    proceduralTextureList.push(proceduralTexture);
-  }
-);
-let finalTexture:any;
-if(proceduralTextureList.length==1)
-  {
-    finalTexture =  proceduralTextureList[0];
-  }
-  else
-  {
-    proceduralTextureList.forEach( (pt:any)=>
-      {
-        if(!finalTexture)
-          {
-            finalTexture =pt;  
-          }
-          else
-          {
-            finalTexture = `mix(${finalTexture},${pt},0.5)`;
-          }
-
-      }
-      
-    )
-  }
-    this.setValue(finalTexture, material);
-  }
-  hexToRgb2(hex: string) {
-    hex = hex.replace(/^#/, '');
-
-    var r = parseInt(hex.substring(0, 2), 16);
-    var g = parseInt(hex.substring(2, 4), 16);
-    var b = parseInt(hex.substring(4, 6), 16);
-    return [r, g, b];
-  }
 }

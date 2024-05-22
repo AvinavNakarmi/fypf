@@ -1,5 +1,5 @@
 <div class="light-preview">
-  <h4>light preview</h4>
+  <h4 class="light-preview-title">light preview</h4>
   <ul>
     <li
       class="light"
@@ -50,7 +50,6 @@
     />
     <div *ngIf="currentMaterialProperties.name != 'IOR'">
       <span (click)="addProceduralTexture()"> Add Procedural Texture</span>
-      <span (click)="addImageTexture()"> Add Image Texture</span>
     </div>
   </div>
   <div
@@ -59,8 +58,8 @@
       !currentMaterialProperties.isImageTexture
     "
   >
-    <div style="height: 40vh; overflow-y: scroll">
-      <div
+    <div class="material-container" >
+      <div class="material"
         *ngFor="
           let texture of currentMaterialProperties.TextureProperties;
           let i = index
@@ -138,9 +137,18 @@
             [value]="currentMaterialProperties.TextureProperties[i].itter"
           />
         </div>
+        <div *ngIf="currentMaterialProperties.TextureProperties[i].random">
+          <label for="">random</label>
+          <input
+            type="number"
+            name=""
+            id=""
+            (change)="setRandom($event, i)"
+            [value]="currentMaterialProperties.TextureProperties[i].random"
+          />
+        </div>
         <button
           (click)="removeTexture(i)"
-          *ngIf="currentMaterialProperties.TextureProperties.length > 1"
         >
           remove texture
         </button>

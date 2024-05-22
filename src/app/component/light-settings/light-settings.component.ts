@@ -97,6 +97,7 @@ export class LightSettingsComponent implements OnInit {
           upper:.9,
           lower:0.1,
           itter: null,
+          random:null,
         },
       ],
     },
@@ -113,6 +114,13 @@ export class LightSettingsComponent implements OnInit {
   setTextureLower(event:Event,id :number)
   {
     this.currentMaterialProperties.TextureProperties[id].lower =parseFloat((event.target as HTMLInputElement).value);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name)
+    this.setGlobalMaterial();
+
+  }
+  setRandom(event:Event ,id :number)
+  {
+    this.currentMaterialProperties.TextureProperties[id].random =parseFloat((event.target as HTMLInputElement).value);
     this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name)
     this.setGlobalMaterial();
 
@@ -149,6 +157,14 @@ export class LightSettingsComponent implements OnInit {
       this.currentMaterialProperties.TextureProperties[id].itter = 1.0;
     } else {
       this.currentMaterialProperties.TextureProperties[id].itter = null;
+    }
+    if (
+      this.currentMaterialProperties.TextureProperties[id].name ==
+      TextureType.VORONOI
+    ) {
+      this.currentMaterialProperties.TextureProperties[id].random = 1.0;
+    } else {
+      this.currentMaterialProperties.TextureProperties[id].random = null;
     }
    
     this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
@@ -245,6 +261,10 @@ export class LightSettingsComponent implements OnInit {
   }
   addProceduralTexture() {
     this.currentMaterialProperties.isTexture = true;
+    if(this.currentMaterialProperties.TextureProperties.length==0)
+      {
+        this.addTexture();
+      }
    
         this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
         this.setGlobalMaterial();
@@ -409,11 +429,30 @@ textureProperty =  {
     }
 
     this.currentMaterialProperties.TextureProperties.push(textureProperty);
+    this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
     this.setGlobalMaterial();
   }
   removeTexture(id:number)
   {
     this.currentMaterialProperties.TextureProperties.splice(id,1);
+    if(this.currentMaterialProperties.TextureProperties.length==0)
+      {
+        this.currentMaterialProperties.isTexture =false;
+        if(this.currentMaterialProperties.name=="color")
+          {
+            const color = this.hexToRgb2(this.currentMaterialProperties.value);
+            this.textureService.setValue(`vec3(float(${color[0]/255}),float(${color[1]/255}),float(${color[2]/255}))`,this.currentMaterialProperties.name);
+          }
+          else
+          {
+            this.textureService.setValue(this.currentMaterialProperties.value,this.currentMaterialProperties.name);
+
+          }
+      }
+      else
+      {
+        this.textureService.setTexture(this.currentMaterialProperties.TextureProperties,this.currentMaterialProperties.name);
+      }
     this .setGlobalMaterial();
 
 

@@ -172,7 +172,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   changeObject(object: ObjectType) {
     switch (object) {
       case ObjectType.CUBE:
-        this.objectService.getPlane().subscribe((data) => {
+        this.objectService.getCube().subscribe((data) => {
           this.objectData = new Float32Array(data.vertices);
           this.objectNormalData = new Float32Array(data.normals);
           this.objectTextCoordData = new Float32Array(data.textCoord);
@@ -186,6 +186,21 @@ export class CanvasComponent implements AfterViewInit, OnInit {
         });
 
         break;
+        case ObjectType.PLANE:
+          this.objectService.getPlane().subscribe((data) => {
+            this.objectData = new Float32Array(data.vertices);
+            this.objectNormalData = new Float32Array(data.normals);
+            this.objectTextCoordData = new Float32Array(data.textCoord);
+  
+            this.sceneService.addObjectToScene(this.objectData);
+            this.sceneService.addObjectNormalToScene(this.objectNormalData);
+            this.sceneService.addObjectTextureCoordToScene(
+              this.objectTextCoordData
+            );
+            this.sceneService.setBuffer();
+          });
+  
+          break;
       case ObjectType.ICOSPHERE:
         this.objectService.getIcoSphere().subscribe((data) => {
           this.objectData = new Float32Array(data.vertices);
@@ -299,7 +314,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
   }
   renderTexture(value: string, canvas: any, object: any) {
     const vertexShaderSource = ` 
-precision mediump float;
+precision highp float;
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 a_texCoord;
@@ -319,7 +334,7 @@ void main() {
    }
 `;
     const fragmentShaderSource = `
-   precision mediump float;
+   precision highp float;
 varying vec4 v_position;
 varying vec4 v_normal;
 varying vec2 v_texCoord;
@@ -513,6 +528,62 @@ vec3 calculateNormals(vec2 uv, int textureIndex,float scale ,float upper ,float 
   return normal;
 
 }
+
+float RGBtoBW(vec3 color )
+{
+  return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);  
+}
+
+float RGBtoBW(vec4 color)
+{
+  return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);  
+}
+
+vec2 noise2x2(vec2 p) {
+  float x = dot(p, vec2(123.4, 234.5));
+  float y = dot(p, vec2(345.6, 456.7));
+  vec2 noise = vec2(x, y);
+  noise = sin(noise);
+  noise = noise * 43758.5453;
+  noise = fract(noise);
+  return  noise;
+}
+float voronoiNoise(vec2 uv,float scale,float seed)
+{
+  
+  vec3 color = vec3(0.0);
+  uv = uv* scale;
+  vec2  currentGridCoord = fract(uv);
+  vec2  currentGridID = floor(uv);
+
+   color = vec3(currentGridCoord, 0.0);
+  float minDistFromPixel = 1.0;
+  
+  for (float i = -1.0; i <= 1.0; i++) {
+    for (float j = -1.0; j <= 1.0; j++) {
+      vec2 adjGridCoords = vec2(i, j);
+      vec2 pointOnAdjGrid = adjGridCoords;
+vec2 noise = noise2x2(currentGridID + adjGridCoords);
+ pointOnAdjGrid = adjGridCoords + sin(seed* noise) * 0.5;
+
+      float dist = length(currentGridCoord - pointOnAdjGrid);
+      minDistFromPixel = min(dist, minDistFromPixel);
+
+    }
+
+  }
+
+
+  // part 3.2 - display voronoi noise
+  color = vec3(minDistFromPixel);
+
+  // part 3.3 - display clouds
+
+  // part 3.4 - display clouds with dots
+
+  return  RGBtoBW(vec4(vec3(color),1.0));
+  
+}
 vec3 calculateNormals(vec2 uv,float scale,int  itter,float upper ,float lower)
 {
   float diff= 0.0001;
@@ -521,6 +592,36 @@ vec3 calculateNormals(vec2 uv,float scale,int  itter,float upper ,float lower)
    float p2 = layeredValueNoise((uv -vec2(diff,0.0)),itter,scale);
    float p3 = layeredValueNoise((uv +vec2(0.0,diff)),itter,scale);
    float p4 = layeredValueNoise((uv -vec2(0.0,diff)),itter,scale);
+    
+   if(upper<lower)
+    {
+      p1= clamp(1.0-p1, upper,lower);
+      p2= clamp(1.0-p2, upper,lower);  
+      p3= clamp(1.0-p3, upper,lower);  
+      p4= clamp(1.0-p4, upper,lower);  
+    }  
+    else
+    {
+     
+      p1= clamp(p1, lower,upper);
+      p2= clamp(p2, lower,upper);  
+      p3= clamp(p3, lower,upper);  
+      p4= clamp(p4, lower,upper);  
+    
+    }
+  vec3 normal = normalize(vec3(p1-p2,p3-p4,height));
+  return normal;
+
+}
+
+vec3 calculateNormals(vec2 uv,float scale,float upper ,float lower,float  random)
+{
+  float diff= 0.0001;
+  float height = .0001;
+   float p1 =  voronoiNoise((uv +vec2(diff,0.0)),scale,random);
+   float p2 =  voronoiNoise((uv -vec2(diff,0.0)),scale,random);
+   float p3 =  voronoiNoise((uv +vec2(0.0,diff)),scale,random);
+   float p4 =  voronoiNoise((uv -vec2(0.0,diff)),scale,random);
     
    if(upper<lower)
     {
@@ -555,15 +656,7 @@ vec3 calculateNormals2(vec2 uv,float p1,float p2,float p3,float p4)
 
 }
 
-float RGBtoBW(vec3 color )
-{
-  return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);  
-}
 
-float RGBtoBW(vec4 color)
-{
-  return  (0.21*color.r)+(0.72*color.g)+(0.7* color.b);  
-}
 void main() {
   gl_FragColor = vec4(vec3(${value}),1.0);
  
@@ -650,8 +743,8 @@ void main() {
   }
   getTextures() {
     let canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 500;
+    canvas.width = 1080;
+    canvas.height = 1080;
     let canvas2 = document.getElementById('canvas2');
     if (canvas2) {
       canvas2.appendChild(canvas);
@@ -700,7 +793,14 @@ void main() {
                 } else if (texture.name == TextureType.RIDGED) {
                   tempval = `calculateNormals(v_texCoord, 2,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}))`;
                 }
-                tempval = ` normalize(mix(v_normal.xyz, ${tempval}, 0.5))`;
+                else if (texture.name == TextureType.VORONOI) {
+                  tempval = `calculateNormals(v_texCoord,float(${texture.scale}),float(${texture.upper}),float(${texture.lower}),float(${texture.random}))`;
+                }
+                else
+                {
+                  tempval = ` normalize(mix(v_normal.xyz, ${tempval}, 0.5))`;
+
+                }
               } else {
                 if (texture.name == TextureType.PERLIN) {
                   tempval = ` perlinNoise(v_texCoord,float(${texture.scale}))`;
@@ -708,7 +808,12 @@ void main() {
                   tempval = ` layeredValueNoise(v_texCoord,int(${texture.itter}),float(${texture.scale}))`;
                 } else if (texture.name == TextureType.BILLOW) {
                   tempval = ` billowNoise(v_texCoord,float(${texture.scale}))`;
-                } else if (texture.name == TextureType.RIDGED) {
+                }
+                else if(texture.name == TextureType.VORONOI)
+                  {
+                    tempval = `voronoiNoise(v_texCoord,float(${texture.scale}),float(${texture.random})) `;
+                  }  
+                else if (texture.name == TextureType.RIDGED) {
                   tempval = ` ridgedNoise(v_texCoord,float(${texture.scale}))`;
                 } else {
                   tempval = 'float(0.5)';
